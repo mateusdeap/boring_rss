@@ -1,0 +1,7 @@
+<h1>Feeds#index</h1>
+<turbo-frame id="new_feed">
+  <%= link_to "Add feed", new_feed_path %>
+</turbo-frame>
+<div id="feeds">
+  <%= render partial: "feeds/feed", collection: @feeds %>
+</div>

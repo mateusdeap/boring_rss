@@ -1,0 +1,9 @@
+<h1><%= @feed.title %></h2>
+<% @feed.items.each do |item| %>
+  <article>
+    <header><h2><%= link_to item.title, item.link %></h2></header>
+    <p>
+      <%= item.description.html_safe %>
+    </p>
+  </article>
+<% end %>
