@@ -1,9 +1,8 @@
-<h1><%= @feed.title %></h2>
-<% @feed.items.each do |item| %>
-  <article>
-    <header><h2><%= link_to item.title, item.link %></h2></header>
-    <p>
-      <%= item.description.html_safe %>
-    </p>
-  </article>
-<% end %>
+<turbo-frame id="current_feed">
+  <h1><%= @feed.title %></h2>
+  <% @feed.items.each do |item| %>
+    <article>
+      <header><h2><%= link_to item.title, item_path(item), data: { turbo_frame: "current_item"} %></h2></header>
+    </article>
+  <% end %>
+</turbo-frame>

@@ -1,17 +1,8 @@
-<div id="<%= dom_id item %>">
-  <div>
-    <strong>Title:</strong>
-    <%= item.title %>
-  </div>
-
-  <div>
-    <strong>Link:</strong>
-    <%= item.link %>
-  </div>
-
-  <div>
-    <strong>Description:</strong>
-    <%= item.description %>
-  </div>
-
-</div>
+<turbo-frame id="current_item">
+  <article class="flex flex-col" id="<%= dom_id item %>">
+    <header>
+      <%= link_to item.title, item.link %>
+    </header>
+    <%= item.description.html_safe %>
+  </article>
+</turbo-frame>

@@ -66,3 +66,7 @@ group :test do
 end
 
 gem "rss", "~> 0.3.3"
+
+gem "tailwindcss-rails", "~> 4.6"
+
+gem "heroicons", "~> 2.2"

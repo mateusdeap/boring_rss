@@ -26,6 +26,16 @@ class FeedsController < ApplicationController
     end
   end
 
+  def destroy
+    feed = Feed.find(params[:id])
+    feed.destroy
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.remove(feed) }
+      format.html { redirect_to :feeds }
+    end
+  end
+
   private
 
   def feed_params
