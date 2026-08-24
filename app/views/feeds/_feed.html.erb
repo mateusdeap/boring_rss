@@ -1,5 +1,5 @@
 <article id="<%= dom_id feed %>" data-feed-id="<%= feed.id %>">
   <header>
-    <h2 class="text-xl"><%= link_to feed.title, feed_path(feed.id), data: { turbo_frame: "current_feed"} %></h2>
+    <p class="text-md"><%= link_to feed.title, feed_path(feed.id), data: { turbo_frame: "current_feed"} %></h2>
   </header>
 </article>

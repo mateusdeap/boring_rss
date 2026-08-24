@@ -6,6 +6,7 @@ class InitializeFeed
   def call
     parsed_feed = RSS::Parser.parse(@link)
     Feed.new(
+      feed_url: @link,
       title: parsed_feed.channel.title,
       description: parsed_feed.channel.description,
       link: parsed_feed.channel.link,

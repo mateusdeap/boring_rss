@@ -7,8 +7,9 @@ class InitializeItems
     @parsed_items.map do |item|
       Item.new(
         title: item.title,
-        description: item.description,
-        link: item.link
+        summary: item.description,
+        link: item.link,
+        published_at: item.pubDate
       )
     end
   end

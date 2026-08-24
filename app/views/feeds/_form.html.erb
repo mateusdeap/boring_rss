@@ -1,0 +1,22 @@
+<turbo-frame id="new-feed">
+  <%= form_with model: feed, local: true, method: "dialog", class: "flex flex-col gap-2 w-full" do |f| %>
+    <% if feed.errors.any? %>
+      <div class="flex flex-col">
+        <h2><%= pluralize(feed.errors.count, "error") %> prohibited this article from being saved:</h2>
+        <ul>
+          <% feed.errors.full_messages.each do |message| %>
+            <li><%= message %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+    <div class="flex gap-2">
+      <%= f.label :link, "Link:" %>
+      <%= f.text_area :link, autofocus: true, class: "grow border" %>
+    </div>
+    <div class="flex gap-2 justify-end">
+      <button commandfor="my-dialog" command="close" type="button">Close</button>
+      <%= f.submit "Add feed", class: "border px-2" %>
+    </div>
+  <% end %>
+</turbo-frame>

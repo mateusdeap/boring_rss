@@ -3,9 +3,9 @@
 one:
   title: MyString
   link: MyString
-  description: MyString
+  summary: MyString
 
 two:
   title: MyString
   link: MyString
-  description: MyString
+  summary: MyString

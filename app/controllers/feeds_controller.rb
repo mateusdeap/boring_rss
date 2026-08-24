@@ -22,7 +22,14 @@ class FeedsController < ApplicationController
         format.html { redirect_to :feeds }
       end
     else
-      render :new, status: :unprocessable_content
+      respond_to do |format|
+        format.turbo_stream do
+          render :new, assigns: { feed: feed }, status: :unprocessable_content
+        end
+        format.html do
+          render :new, assigns: { feed: feed }, status: :unprocessable_content
+        end
+      end
     end
   end
 

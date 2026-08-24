@@ -1,10 +1,10 @@
 <div class="flex flex-col w-full">
-  <h1 class="text-2xl font-bold">Feeds#index</h1>
-  <turbo-frame id="new_feed">
-    <%= link_to "Add feed", new_feed_path %>
-  </turbo-frame>
+  <div class="flex items-center gap-2">
+    <h1 class="text-2xl font-bold my-0">Feeds</h1>
+    <button class="text-xs flex border px-2" command="show-modal" commandfor="my-dialog">Add Feed</button>
+  </div>
   <div class="flex" data-controller="context-menu">
-    <div class="w-1/6 flex-none">
+    <div class="w-1/12 flex-none">
       <div class="flex flex-col gap-2" id="feeds" data-action="contextmenu->context-menu#open">
         <%= render partial: "feeds/feed", collection: @feeds %>
       </div>
@@ -20,3 +20,7 @@
   <%= render "feeds/context_menu" %>
   </div>
 </div>
+
+<dialog id="my-dialog" class="m-auto p-2 w-lg" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
+  <%= render "form", feed: Feed.new %>
+</dialog>

@@ -10,10 +10,11 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_142202) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_122242) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
+    t.string "feed_url"
     t.string "link"
     t.string "title"
     t.datetime "updated_at", null: false
@@ -21,11 +22,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_142202) do
 
   create_table "items", force: :cascade do |t|
     t.datetime "created_at", null: false
-    t.string "description"
     t.integer "feed_id", null: false
+    t.string "guid"
     t.string "link"
+    t.datetime "published_at"
+    t.string "summary"
     t.string "title"
     t.datetime "updated_at", null: false
+    t.index ["feed_id", "guid"], name: "index_items_on_feed_id_and_guid", unique: true
     t.index ["feed_id"], name: "index_items_on_feed_id"
   end
 
