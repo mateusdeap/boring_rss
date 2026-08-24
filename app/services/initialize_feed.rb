@@ -4,15 +4,15 @@ class InitializeFeed
   end
 
   def call
-    parsed_feed = RSS::Parser.parse(@link)
+    parsed_feed = ParsedFeed.parse(@link)
     Feed.new(
       feed_url: @link,
-      title: parsed_feed.channel.title,
-      description: parsed_feed.channel.description,
-      link: parsed_feed.channel.link,
-      items: InitializeItems.new(parsed_feed.channel.items).call
+      title: parsed_feed.title,
+      description: parsed_feed.description,
+      link: parsed_feed.link,
+      items: InitializeItems.new(parsed_feed.entries).call
     )
-  rescue RSS::NotWellFormedError
+  rescue RSS::Error
     feed = Feed.new
     feed.errors.add(:link, "Invalid link")
     feed

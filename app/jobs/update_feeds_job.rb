@@ -5,11 +5,13 @@ class UpdateFeedsJob < ApplicationJob
     puts "Updating Feeds..."
     feeds = Feed.all
     feeds.each do |feed|
-      items = RSS::Parser.parse(feed.feed_url).channel.items
-      most_recent_item_published_at = feed.items.order(published_at: :desc)[0].published_at
-      new_parsed_items = items.select { |item| item.pubDate > most_recent_item_published_at }
-      new_items = InitializeItems.new(new_parsed_items).call
+      parsed_feed = ParsedFeed.parse(feed.feed_url)
+      existing_identities = feed.items.pluck(:guid, :link).map { |guid, link| guid.presence || link }.to_set
+      new_entries = parsed_feed.entries.reject { |entry| existing_identities.include?(entry.guid.presence || entry.link) }
+      new_items = InitializeItems.new(new_entries).call
       feed.items << new_items
+    rescue RSS::Error => e
+      Rails.logger.warn("Skipping feed #{feed.id} (#{feed.feed_url}): #{e.message}")
     end
   end
 end

@@ -1,15 +1,16 @@
 class InitializeItems
-  def initialize(parsed_items)
-    @parsed_items = parsed_items
+  def initialize(parsed_entries)
+    @parsed_entries = parsed_entries
   end
 
   def call
-    @parsed_items.map do |item|
+    @parsed_entries.map do |entry|
       Item.new(
-        title: item.title,
-        summary: item.description,
-        link: item.link,
-        published_at: item.pubDate
+        title: entry.title,
+        summary: entry.summary,
+        link: entry.link,
+        guid: entry.guid,
+        published_at: entry.published_at
       )
     end
   end
