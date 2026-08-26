@@ -8,6 +8,7 @@ class ItemsController < ApplicationController
 
   # GET /items/1 or /items/1.json
   def show
+    @item.mark_read!
   end
 
   # GET /items/new
@@ -66,6 +67,6 @@ class ItemsController < ApplicationController
 
   # Only allow a list of trusted parameters through.
   def item_params
-    params.expect(item: [:title, :link, :summary])
+    params.expect(item: [ :title, :link, :summary ])
   end
 end

@@ -3,8 +3,9 @@
     <h1 class="text-2xl font-bold my-0">Feeds</h1>
     <button class="text-xs flex border px-2" command="show-modal" commandfor="my-dialog">Add Feed</button>
   </div>
-  <div class="flex" data-controller="context-menu">
-    <div class="w-1/12 flex-none">
+  <%= turbo_stream_from :feeds %>
+  <div class="flex gap-2" data-controller="context-menu">
+    <div class="w-1/6 flex-none">
       <div class="flex flex-col gap-2" id="feeds" data-action="contextmenu->context-menu#open">
         <%= render partial: "feeds/feed", collection: @feeds %>
       </div>

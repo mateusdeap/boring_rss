@@ -28,6 +28,17 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "showing an item marks it read without affecting other items" do
+    other_item = items(:two)
+    assert_not @item.read?
+    assert_not other_item.read?
+
+    get item_url(@item)
+
+    assert @item.reload.read?
+    assert_not other_item.reload.read?
+  end
+
   test "should get edit" do
     get edit_item_url(@item)
     assert_response :success

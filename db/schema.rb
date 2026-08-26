@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_24_122242) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_24_180702) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
@@ -26,6 +26,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_24_122242) do
     t.string "guid"
     t.string "link"
     t.datetime "published_at"
+    t.boolean "read", default: false, null: false
     t.string "summary"
     t.string "title"
     t.datetime "updated_at", null: false

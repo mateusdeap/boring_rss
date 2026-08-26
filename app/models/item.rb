@@ -1,5 +1,22 @@
 class Item < ApplicationRecord
   belongs_to :feed
 
-  after_create_commit -> { broadcast_prepend_to feed, target: "items", partial: "items/list_item", locals: { item: self } }
+  scope :unread, -> { where(read: false) }
+
+  after_create_commit :broadcast_creation
+
+  def mark_read!
+    return if read?
+
+    update!(read: true)
+    broadcast_replace_later_to feed, target: self, partial: "items/list_item", locals: { item: self }
+    broadcast_replace_later_to :feeds, target: feed, partial: "feeds/feed", locals: { feed: feed }
+  end
+
+  private
+
+  def broadcast_creation
+    broadcast_prepend_to feed, target: "items", partial: "items/list_item", locals: { item: self }
+    broadcast_replace_to :feeds, target: feed, partial: "feeds/feed", locals: { feed: feed }
+  end
 end

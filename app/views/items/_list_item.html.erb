@@ -1,3 +1,10 @@
 <article id="<%= dom_id item %>">
-  <header><h2><%= link_to item.title, item_path(item), data: { turbo_frame: "current_item"} %></h2></header>
+  <header>
+    <h2 class="flex items-center gap-1 text-sm">
+      <%= link_to item.title, item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false } %>
+      <% unless item.read? %>
+        <span class="inline-block w-2 h-2 rounded-full bg-current"></span>
+      <% end %>
+    </h2>
+  </header>
 </article>

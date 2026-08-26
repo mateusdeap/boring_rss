@@ -3,4 +3,8 @@ class Feed < ApplicationRecord
   accepts_nested_attributes_for :items
 
   validates_presence_of :link
+
+  def unread_count
+    items.unread.count
+  end
 end
