@@ -1,8 +1,12 @@
 <turbo-frame id="current_item">
   <article class="flex flex-col" id="<%= dom_id item %>">
     <header>
-      <%= link_to item.title, item.link %>
+      <% if (safe_link = safe_item_link(item.link)) %>
+        <%= link_to item.title, safe_link %>
+      <% else %>
+        <%= item.title %>
+      <% end %>
     </header>
-    <%= item.summary.html_safe %>
+    <%= sanitize item.summary %>
   </article>
 </turbo-frame>

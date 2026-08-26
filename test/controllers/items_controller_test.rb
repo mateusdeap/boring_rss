@@ -40,6 +40,34 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_not other_item.reload.read?
   end
 
+  test "show sanitizes item summary instead of rendering it raw" do
+    @item.update!(summary: "<script>alert('xss')</script><p>safe</p>")
+
+    get item_url(@item)
+
+    assert_response :success
+    assert_no_match "<script>", response.body
+    assert_match "<p>safe</p>", response.body
+  end
+
+  test "show only links item.link when it is a safe http(s) url" do
+    @item.update!(link: "javascript:alert('xss')")
+
+    get item_url(@item)
+
+    assert_response :success
+    assert_no_match "javascript:alert", response.body
+  end
+
+  test "show links item.link when it is a safe http(s) url" do
+    @item.update!(link: "https://example.com/post")
+
+    get item_url(@item)
+
+    assert_response :success
+    assert_match %(href="https://example.com/post"), response.body
+  end
+
   test "should get edit" do
     get edit_item_url(@item)
     assert_response :success
