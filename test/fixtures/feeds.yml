@@ -4,8 +4,10 @@ one:
   title: MyString
   link: MyString
   feed_url: MyString
+  user: one
 
 two:
   title: MyString
   link: MyString
   feed_url: MyString
+  user: two

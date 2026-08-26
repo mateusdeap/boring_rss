@@ -3,7 +3,7 @@ class ItemsController < ApplicationController
 
   # GET /items or /items.json
   def index
-    @items = Item.all
+    @items = Current.user.items
   end
 
   # GET /items/1 or /items/1.json
@@ -62,7 +62,7 @@ class ItemsController < ApplicationController
 
   # Use callbacks to share common setup or constraints between actions.
   def set_item
-    @item = Item.find(params.expect(:id))
+    @item = Current.user.items.find(params.expect(:id))
   end
 
   # Only allow a list of trusted parameters through.

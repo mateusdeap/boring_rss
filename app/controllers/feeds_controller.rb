@@ -1,10 +1,10 @@
 class FeedsController < ApplicationController
   def index
-    @feeds = Feed.all
+    @feeds = Current.user.feeds
   end
 
   def show
-    @feed = Feed.find(params[:id])
+    @feed = Current.user.feeds.find(params[:id])
   end
 
   def new
@@ -12,12 +12,12 @@ class FeedsController < ApplicationController
   end
 
   def create
-    feed = InitializeFeed.new(link: feed_params[:link]).call
+    feed = InitializeFeed.new(link: feed_params[:link], user: Current.user).call
 
     if feed.save
       respond_to do |format|
         format.turbo_stream do
-          render turbo_stream: turbo_stream.append(:feeds, partial: "feeds/feed", locals: {feed: feed})
+          render turbo_stream: turbo_stream.append(:feeds, partial: "feeds/feed", locals: { feed: feed })
         end
         format.html { redirect_to :feeds }
       end
@@ -34,7 +34,7 @@ class FeedsController < ApplicationController
   end
 
   def destroy
-    feed = Feed.find(params[:id])
+    feed = Current.user.feeds.find(params[:id])
     feed.destroy
 
     respond_to do |format|
@@ -46,6 +46,6 @@ class FeedsController < ApplicationController
   private
 
   def feed_params
-    params.expect(feed: [:link])
+    params.expect(feed: [ :link ])
   end
 end
