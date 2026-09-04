@@ -1,1 +1,89 @@
 @import "tailwindcss";
+
+/*
+ * Color roles (RSS Reader Design System, section 01). Light values live in
+ * @theme; dark values override the same custom properties later in the
+ * cascade, so every `bg-sidebar`/`text-text-dim`/etc. utility just follows
+ * whichever block won. Dark applies either from the OS (`prefers-color-scheme`,
+ * the "system" preference) or from the signed-in user's explicit choice
+ * (`data-theme` on <html>, set in the layout from `Current.user.theme`).
+ * `accent` stays #CC5500 in both modes (selection fill needs to hold white
+ * text); `accent-dot` is the one role that lifts in dark mode, for unread
+ * dots and body links.
+ *
+ * The explicit override lives on <body>, not <html>: Turbo Drive's
+ * PageRenderer only ever syncs `lang`/`dir` onto <html> across a visit
+ * (`#setLanguage()`) — everything else there is frozen from the very first
+ * page load. <body> itself gets swapped wholesale on every visit
+ * (`document.body.replaceWith(newElement)`), so an attribute set there
+ * always reflects the just-rendered response. (Verified against the
+ * installed turbo-rails 2.0.23 JS source, not assumed.)
+ */
+/*
+ * `static` forces every variable below into the compiled output even if no
+ * utility class currently references it (plain Tailwind `@theme` tree-shakes
+ * unused theme colors) — several roles here (sidebar, list, reading) aren't
+ * consumed by any view yet, only shipped for steps 2+ to build against.
+ */
+@theme static {
+  --color-sidebar: #ededec;
+  --color-list: #f6f6f5;
+  --color-reading: #ffffff;
+  --color-divider: #d4d4d2;
+  --color-text: #0a0a0a;
+  --color-text-dim: #525250;
+  --color-text-faint: #8a8a87;
+  --color-accent: #cc5500;
+  --color-accent-dot: #cc5500;
+  --color-error: #aa0000;
+}
+
+@media (prefers-color-scheme: dark) {
+  body:not([data-theme="light"]) {
+    --color-sidebar: #0c0c0b;
+    --color-list: #141413;
+    --color-reading: #1c1c1a;
+    --color-divider: #2e2e2c;
+    --color-text: #fafaf9;
+    --color-text-dim: #a3a39f;
+    --color-text-faint: #6b6b68;
+    --color-accent-dot: #ff9e4a;
+    --color-error: #f06a6a;
+  }
+}
+
+body[data-theme="dark"] {
+  --color-sidebar: #0c0c0b;
+  --color-list: #141413;
+  --color-reading: #1c1c1a;
+  --color-divider: #2e2e2c;
+  --color-text: #fafaf9;
+  --color-text-dim: #a3a39f;
+  --color-text-faint: #6b6b68;
+  --color-accent-dot: #ff9e4a;
+  --color-error: #f06a6a;
+}
+
+/*
+ * Tell the browser which schemes this page actually supports, so native
+ * controls (the theme <select> itself, scrollbars) follow along too —
+ * without this, `prefers-color-scheme` still swaps our custom properties
+ * but form chrome stays stuck in light mode.
+ */
+:root {
+  color-scheme: light dark;
+}
+
+body[data-theme="light"] {
+  color-scheme: light;
+}
+
+body[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+/* The base canvas — panes (sidebar/list/reading) are built in later steps. */
+body {
+  background: var(--color-list);
+  color: var(--color-text);
+}

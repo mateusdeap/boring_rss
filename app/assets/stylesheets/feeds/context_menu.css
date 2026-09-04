@@ -5,29 +5,26 @@
 #context-menu {
   position: fixed;
   z-index: 1000;
-  background: white;
+  background: var(--color-reading);
   width: 16rem;
   height: 2rem;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-divider);
   display: flex;
   flex-direction: column;
 
-  // Drop shadow
-  box-shadow: 0 0 3px 0 rgba(0, 0, 0, 0.3);
-
   a {
-    color: black;
+    color: var(--color-text);
     text-decoration: none;
     display: flex;
     height: 100%;
     padding: 0 0.75rem 0 0.5rem;
     justify-content: space-between;
     align-items: center;
-    
+
     transition: 0.3s ease-in-out;
 
     &:hover {
-      background: #eee;
+      background: var(--color-list);
     }
 
     svg {
