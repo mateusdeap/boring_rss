@@ -71,4 +71,4 @@ gem "tailwindcss-rails", "~> 4.6"
 
 gem "heroicons", "~> 2.2"
 
-gem "mission_control-jobs", "~> 1.1"
+gem "mission_control-jobs", "~> 1.2"
