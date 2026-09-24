@@ -1,0 +1,35 @@
+<%# Move-feed and rename-folder dialogs, opened from the feed tree's context
+    menu (context_menu_controller.js), which points each form at the
+    right record before showing it. Errors land in the *-error line and
+    keep the dialog open (FeedTreeStreams#render_dialog_error). %>
+<dialog id="move-feed-dialog" class="r-dialog" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
+  <div class="r-panel-h">MOVE FEED</div>
+  <%= form_with url: "#", method: :patch, scope: :feed, class: "r-stack r-pad" do |f| %>
+    <p><span class="r-label">Feed</span> <span data-dialog-subject></span></p>
+    <div class="r-field">
+      <%= f.label :folder_name, "Folder", class: "r-label", for: "move_feed_folder_name" %>
+      <%= f.text_field :folder_name, id: "move_feed_folder_name", list: "folder-names", autocomplete: "off", placeholder: "Blank = top level", class: "r-input" %>
+      <span class="r-help">An existing folder, or a new name to create one. Blank moves it to the top level.</span>
+      <span class="r-help text-fail" id="move-feed-error" role="alert"></span>
+    </div>
+    <div class="r-dialog-actions">
+      <button type="button" class="r-btn" commandfor="move-feed-dialog" command="close"><span class="r-key">ESC</span> Cancel</button>
+      <%= f.submit "Move", class: "r-btn r-btn-primary" %>
+    </div>
+  <% end %>
+</dialog>
+
+<dialog id="rename-folder-dialog" class="r-dialog" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
+  <div class="r-panel-h">RENAME FOLDER</div>
+  <%= form_with url: "#", method: :patch, scope: :folder, class: "r-stack r-pad" do |f| %>
+    <div class="r-field">
+      <%= f.label :name, "Name", class: "r-label", for: "rename_folder_name" %>
+      <%= f.text_field :name, id: "rename_folder_name", required: true, maxlength: 64, autocomplete: "off", class: "r-input" %>
+      <span class="r-help text-fail" id="rename-folder-error" role="alert"></span>
+    </div>
+    <div class="r-dialog-actions">
+      <button type="button" class="r-btn" commandfor="rename-folder-dialog" command="close"><span class="r-key">ESC</span> Cancel</button>
+      <%= f.submit "Rename", class: "r-btn r-btn-primary" %>
+    </div>
+  <% end %>
+</dialog>

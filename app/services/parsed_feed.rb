@@ -12,6 +12,16 @@ class ParsedFeed
     new(RSS::Parser.parse(source, false))
   end
 
+  # Parses an already-fetched response body (FeedFetcher). RSS::Parser's
+  # `normalize_rss` only treats a string as XML if it contains "<" —
+  # anything else it tries as a URL to fetch or a local file path to read.
+  # A fetched body must never be interpreted that way, so reject it here.
+  def self.parse_xml(body)
+    raise RSS::NotWellFormedError, "Response is not XML" unless body.include?("<")
+
+    parse(body)
+  end
+
   def initialize(document)
     @document = document
   end
@@ -26,6 +36,10 @@ class ParsedFeed
 
   def link
     atom? ? AtomLink.alternate(@document.links) : @document.channel.link
+  end
+
+  def format
+    atom? ? "Atom" : "RSS"
   end
 
   def entries

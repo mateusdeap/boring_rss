@@ -1,10 +1,21 @@
-<div id="context-menu" data-context-menu-target="menu" class="hidden">
-  <%= link_to "#", data: {
-    context_menu_target: "deleteLink",
-    confirm: "Are you sure",
-    turbo_method: :delete
-  } do %>
-    <%= heroicon "trash", variant: :micro %>
-      <p>Delete Feed</p>
-  <% end %>
+<%# Right-click menu on the feed tree. context_menu_controller.js shows
+    the feed or folder group depending on which row was clicked, and
+    points the links and dialogs at that record. %>
+<div id="context-menu" data-context-menu-target="menu" class="hidden" role="menu">
+  <div data-context-menu-target="feedItems">
+    <button type="button" role="menuitem" data-action="context-menu#moveFeed">Move to folder…</button>
+    <%= link_to "Delete feed", "#", role: "menuitem", data: {
+      context_menu_target: "deleteFeedLink",
+      turbo_confirm: "Delete this feed and all its items?",
+      turbo_method: :delete
+    } %>
+  </div>
+  <div data-context-menu-target="folderItems">
+    <button type="button" role="menuitem" data-action="context-menu#renameFolder">Rename folder…</button>
+    <%= link_to "Delete folder", "#", role: "menuitem", data: {
+      context_menu_target: "deleteFolderLink",
+      turbo_confirm: "Delete this folder? Its feeds move to the top level.",
+      turbo_method: :delete
+    } %>
+  </div>
 </div>

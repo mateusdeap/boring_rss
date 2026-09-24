@@ -3,10 +3,10 @@ module ItemsHelper
 
   # Rails' `sanitize` default allow-list drops table markup entirely, which
   # would silently eat any table a feed embeds. This list is what the
-  # reading surface (app/assets/tailwind/application.css) actually styles —
-  # deliberately not "the default list plus tables," since that would also
-  # admit tags (dl/kbd/samp/mark/...) the reading surface has no treatment
-  # for.
+  # reader's `.r-body` rules (app/assets/tailwind/application.css) actually
+  # style — deliberately not "the default list plus tables," since that
+  # would also admit tags (dl/kbd/samp/mark/...) the reader has no
+  # treatment for.
   SUMMARY_ALLOWED_TAGS = %w[
     p h2 h3 h4 blockquote pre ul ol li hr
     table thead tbody tfoot tr td th

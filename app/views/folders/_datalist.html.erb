@@ -1,0 +1,6 @@
+<%# Folder-name suggestions for the Add feed and Move feed dialogs. %>
+<datalist id="folder-names">
+  <% user.folders.alphabetical.each do |folder| %>
+    <option value="<%= folder.name %>"></option>
+  <% end %>
+</datalist>

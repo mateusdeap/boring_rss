@@ -1,15 +1,20 @@
 @import "tailwindcss";
 
 /*
- * Color roles (RSS Reader Design System, section 01). Light values live in
- * @theme; dark values override the same custom properties later in the
- * cascade, so every `bg-sidebar`/`text-text-dim`/etc. utility just follows
- * whichever block won. Dark applies either from the OS (`prefers-color-scheme`,
- * the "system" preference) or from the signed-in user's explicit choice
- * (`data-theme` on <html>, set in the layout from `Current.user.theme`).
- * `accent` stays #CC5500 in both modes (selection fill needs to hold white
- * text); `accent-dot` is the one role that lifts in dark mode, for unread
- * dots and body links.
+ * RDR-01 design tokens (https://claude.ai/artifact/2phj7G2SbeN6DJEKGaD1Nd,
+ * project/tokens.json). Two themes: Paper (the light default) and Carbon
+ * (dark). Paper values live in @theme; Carbon overrides the same custom
+ * properties later in the cascade, so every `bg-paper-2`/`text-ink-3`/etc.
+ * utility just follows whichever block won. Carbon applies either from the
+ * OS (`prefers-color-scheme`, the "system" preference) or from the
+ * signed-in user's explicit choice (`data-theme="dark"` on <body>, set in
+ * the layout from `Current.user.theme` — the enum keeps its light/dark
+ * values; only the labels say Paper/Carbon).
+ *
+ * The UI is monochrome; colour is reserved for meaning: `signal` is unread
+ * and nothing else, `ok`/`warn`/`fail` are fetch health (always next to a
+ * code or word), `link` is URLs and `focus` (its alias), `mark` is search
+ * hits.
  *
  * The explicit override lives on <body>, not <html>: Turbo Drive's
  * PageRenderer only ever syncs `lang`/`dir` onto <html> across a visit
@@ -18,50 +23,92 @@
  * (`document.body.replaceWith(newElement)`), so an attribute set there
  * always reflects the just-rendered response. (Verified against the
  * installed turbo-rails 2.0.23 JS source, not assumed.)
- */
-/*
+ *
  * `static` forces every variable below into the compiled output even if no
  * utility class currently references it (plain Tailwind `@theme` tree-shakes
- * unused theme colors) — several roles here (sidebar, list, reading) aren't
- * consumed by any view yet, only shipped for steps 2+ to build against.
+ * unused theme colors) — several tokens (mark, ok, warn, on-signal) aren't
+ * consumed by any view yet.
+ *
+ * `--font-mono`/`--font-sans` are named exactly as RDR-01's bundle.css
+ * expects. Mono is the default face for all UI chrome; sans (Plex Sans) is
+ * for article text in the reader only. Both load from Google Fonts in the
+ * layout. RDR-01's 4px spacing grid is Tailwind's default `--spacing`
+ * (0.25rem), so `p-2` is already `space-2`; no spacing tokens needed.
  */
 @theme static {
-  --color-sidebar: #ededec;
-  --color-list: #f6f6f5;
-  --color-reading: #ffffff;
-  --color-divider: #d4d4d2;
-  --color-text: #0a0a0a;
-  --color-text-dim: #525250;
-  --color-text-faint: #8a8a87;
-  --color-accent: #cc5500;
-  --color-accent-dot: #cc5500;
-  --color-error: #aa0000;
+  --color-paper: #f4f3ee;
+  --color-paper-2: #e9e7df;
+  --color-paper-3: #d9d6ca;
+  --color-rule: #bcb9ad;
+  --color-rule-strong: #111110;
+  --color-ink: #111110;
+  --color-ink-2: #45443f;
+  --color-ink-3: #5f5d56;
+  --color-signal: #a83008;
+  --color-on-signal: #ffffff;
+  --color-link: #1f47b8;
+  --color-focus: var(--color-link);
+  --color-mark: #f5d547;
+  --color-ok: #1b6134;
+  --color-warn: #7d5200;
+  --color-fail: #a3211a;
+
+  --font-mono: "IBM Plex Mono", "Berkeley Mono", ui-monospace, Menlo, monospace;
+  --font-sans: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --default-font-family: var(--font-mono);
+  --default-mono-font-family: var(--font-mono);
+}
+
+/* RDR-01 fixed dimensions and radii, for the component port. */
+:root {
+  --row: 24px;
+  --row-2: 40px;
+  --hairline: 1px;
+  --tree-w: 248px;
+  --measure: 68ch;
+  --radius-0: 0px;
+  --radius-1: 2px;
+  --radius-dot: 50%;
 }
 
 @media (prefers-color-scheme: dark) {
   body:not([data-theme="light"]) {
-    --color-sidebar: #0c0c0b;
-    --color-list: #141413;
-    --color-reading: #1c1c1a;
-    --color-divider: #2e2e2c;
-    --color-text: #fafaf9;
-    --color-text-dim: #a3a39f;
-    --color-text-faint: #6b6b68;
-    --color-accent-dot: #ff9e4a;
-    --color-error: #f06a6a;
+    --color-paper: #111110;
+    --color-paper-2: #1a1a18;
+    --color-paper-3: #262622;
+    --color-rule: #3a3935;
+    --color-rule-strong: #d9d7cf;
+    --color-ink: #ebe9e2;
+    --color-ink-2: #aeaca3;
+    --color-ink-3: #94928a;
+    --color-signal: #ff7a45;
+    --color-on-signal: #111110;
+    --color-link: #86a8ff;
+    --color-focus: var(--color-link);
+    --color-mark: #5a4b0e;
+    --color-ok: #6fcf8f;
+    --color-warn: #e6b44c;
+    --color-fail: #ff8a80;
   }
 }
 
 body[data-theme="dark"] {
-  --color-sidebar: #0c0c0b;
-  --color-list: #141413;
-  --color-reading: #1c1c1a;
-  --color-divider: #2e2e2c;
-  --color-text: #fafaf9;
-  --color-text-dim: #a3a39f;
-  --color-text-faint: #6b6b68;
-  --color-accent-dot: #ff9e4a;
-  --color-error: #f06a6a;
+  --color-paper: #111110;
+  --color-paper-2: #1a1a18;
+  --color-paper-3: #262622;
+  --color-rule: #3a3935;
+  --color-rule-strong: #d9d7cf;
+  --color-ink: #ebe9e2;
+  --color-ink-2: #aeaca3;
+  --color-ink-3: #94928a;
+  --color-signal: #ff7a45;
+  --color-on-signal: #111110;
+  --color-link: #86a8ff;
+  --color-focus: var(--color-link);
+  --color-mark: #5a4b0e;
+  --color-ok: #6fcf8f;
+  --color-warn: #e6b44c;
+  --color-fail: #ff8a80;
 }
 
 /*
@@ -82,424 +129,234 @@ body[data-theme="dark"] {
   color-scheme: dark;
 }
 
-/* The base canvas — panes (sidebar/list/reading) are built in later steps. */
-body {
-  background: var(--color-list);
-  color: var(--color-text);
+/*
+ * RDR-01 components, ported from the design system's
+ * project/components/bundle.css. Differences from the bundle, all
+ * mechanical: `var(--paper)`-style names become the Tailwind theme names
+ * above (`var(--color-paper)`), the Google Fonts @import is dropped (the
+ * layout's <link> loads them), and base rules sit in @layer base with the
+ * components in @layer components, so Tailwind utilities still win. Rules
+ * after the "App-specific" marker below are this app's additions, not the
+ * bundle's.
+ */
+@layer base {
+  body {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font: 400 12px/16px var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  a {
+    color: var(--color-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: var(--hairline);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-focus);
+    outline-offset: 1px;
+  }
+}
+
+@layer components {
+  .r-pad { padding: 12px; }
+  .r-stack { display: flex; flex-direction: column; gap: 12px; }
+  .r-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .r-label { font: 600 10px/12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-2); }
+  .r-dim { color: var(--color-ink-3); }
+  .r-2 { color: var(--color-ink-2); }
+  .r-link { color: var(--color-link); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: var(--hairline); }
+
+  /* Panel header */
+  .r-panel { border: var(--hairline) solid var(--color-rule-strong); background: var(--color-paper); }
+  .r-panel-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; height: var(--row); padding: 0 8px; background: var(--color-paper-2); border-bottom: var(--hairline) solid var(--color-rule-strong); font: 600 14px/18px var(--font-mono); white-space: nowrap; }
+  .r-panel-h .r-label { font-weight: 400; }
+
+  /* Button */
+  .r-btn { font: 500 12px/16px var(--font-mono); text-transform: uppercase; letter-spacing: .02em; height: var(--row); padding: 0 8px; display: inline-flex; align-items: center; gap: 4px; background: var(--color-paper); color: var(--color-ink); border: var(--hairline) solid var(--color-rule-strong); border-radius: var(--radius-0); cursor: pointer; text-decoration: none; white-space: nowrap; }
+  .r-btn:hover { background: var(--color-paper-2); }
+  .r-btn:active, .r-btn[aria-pressed="true"] { background: var(--color-paper-3); }
+  .r-btn-primary { background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink); }
+  .r-btn-primary:hover { background: var(--color-ink-2); border-color: var(--color-ink-2); }
+  .r-btn[disabled] { cursor: not-allowed; color: var(--color-ink-3); border-color: var(--color-rule); background: var(--color-paper); }
+  .r-key { display: inline-block; min-width: 14px; padding: 0 3px; font: 500 10px/14px var(--font-mono); text-align: center; border: var(--hairline) solid currentColor; border-radius: var(--radius-1); }
+
+  /* Field */
+  .r-field { display: flex; flex-direction: column; gap: 4px; }
+  .r-input { font: 500 12px/16px var(--font-mono); height: var(--row); box-sizing: border-box; padding: 0 8px; background: var(--color-paper); color: var(--color-ink); border: var(--hairline) solid var(--color-rule-strong); border-radius: var(--radius-0); min-width: 0; }
+  .r-input::placeholder { color: var(--color-ink-3); }
+  .r-help { color: var(--color-ink-3); }
+  .r-field[data-state="fail"] .r-input { border-color: var(--color-fail); }
+  .r-field[data-state="fail"] .r-help { color: var(--color-fail); }
+
+  /* Status code */
+  .r-code { display: inline-flex; gap: 4px; align-items: baseline; font: 600 12px/16px var(--font-mono); }
+  .r-code::before { content: ""; width: 6px; height: 6px; align-self: center; background: currentColor; }
+  .r-code-ok { color: var(--color-ok); }
+  .r-code-warn { color: var(--color-warn); }
+  .r-code-fail { color: var(--color-fail); }
+  .r-code-idle { color: var(--color-ink-3); }
+
+  /* Unread */
+  .r-dot { display: inline-block; width: 6px; height: 6px; border-radius: var(--radius-dot); background: var(--color-signal); }
+  .r-count { display: inline-block; min-width: 24px; padding: 0 4px; box-sizing: border-box; text-align: right; font: 600 12px/16px var(--font-mono); background: var(--color-signal); color: var(--color-on-signal); }
+  .r-count-0 { background: none; color: var(--color-ink-3); font-weight: 400; }
+
+  /* Status bar */
+  .r-status { display: flex; align-items: stretch; height: var(--row); background: var(--color-paper-2); border-bottom: var(--hairline) solid var(--color-rule-strong); white-space: nowrap; overflow-x: auto; }
+  .r-status > div { display: flex; align-items: center; gap: 4px; padding: 0 8px; border-right: var(--hairline) solid var(--color-rule); }
+  .r-status > .r-status-id { font-weight: 600; border-right-color: var(--color-rule-strong); }
+  .r-status > .r-grow { flex: 1; border-right: 0; }
+
+  /* Tables (item table, feed tree, log) */
+  .r-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+  .r-table th { font: 600 10px/12px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-2); text-align: left; height: var(--row); padding: 0 8px; border-bottom: var(--hairline) solid var(--color-rule-strong); background: var(--color-paper-2); }
+  .r-table td { height: var(--row); padding: 0 8px; border-bottom: var(--hairline) solid var(--color-rule); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .r-table .r-num { text-align: right; }
+  .r-table tbody tr:hover { background: var(--color-paper-2); }
+  .r-table tr[aria-selected="true"] { background: var(--color-paper-3); box-shadow: inset 2px 0 0 var(--color-ink); }
+  .r-table tr.is-unread .r-title { font-weight: 600; color: var(--color-ink); }
+  .r-table tr.is-read .r-title { color: var(--color-ink-2); }
+  .r-table tr.is-marked .r-title span { background: var(--color-mark); color: var(--color-ink); }
+  .r-table-log td { font-size: 12px; }
+  .r-table-log tbody tr:nth-child(even) { background: var(--color-paper-2); }
+
+  /* Feed tree */
+  .r-tree { list-style: none; margin: 0; padding: 0; background: var(--color-paper-2); }
+  .r-tree li { display: grid; grid-template-columns: 12px 1fr auto auto; gap: 8px; align-items: center; height: var(--row); padding: 0 8px; border-bottom: var(--hairline) solid var(--color-rule); }
+  .r-tree li.r-folder { font-weight: 600; }
+  .r-tree li.r-child { padding-left: calc(8px + 12px); }
+  .r-tree li[aria-selected="true"] { background: var(--color-paper-3); box-shadow: inset 2px 0 0 var(--color-ink); }
+  .r-tree .r-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .r-tree .has-unread .r-name { font-weight: 600; }
+
+  /* Reader */
+  .r-reader { background: var(--color-paper); padding: 24px; }
+  .r-meta { display: grid; grid-template-columns: max-content 1fr; column-gap: 12px; row-gap: 0; border-top: var(--hairline) solid var(--color-rule-strong); border-bottom: var(--hairline) solid var(--color-rule-strong); padding: 8px 0; margin-bottom: 24px; max-width: var(--measure); }
+  .r-meta dt { font: 600 10px/16px var(--font-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--color-ink-2); }
+  .r-meta dd { margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .r-headline { font: 600 26px/32px var(--font-sans); margin: 0 0 12px; max-width: var(--measure); }
+  .r-body { font: 400 16px/26px var(--font-sans); max-width: var(--measure); color: var(--color-ink); }
+  .r-body p { margin: 0 0 16px; }
+  .r-caption { font: italic 400 13px/18px var(--font-sans); color: var(--color-ink-2); }
 }
 
 /*
- * SidebarItem (design system section 08, step 2) — the only place a feed
- * row gets drawn (app/views/feeds/_feed.html.erb). All six states from
- * section 04 are implemented now.
- * Hover has no dedicated role token (only the 9 from section 01 shipped in
- * step 1), so it's derived from the sidebar plane rather than a new
- * hard-coded color. Selected-but-unfocused is a neutral divider fill, not a
- * faded accent — it's how a three-pane app shows where the keyboard is
- * (app/javascript/controllers/selection_controller.js) versus what's shown.
- * Fetch-error is the 45%-opacity + 5px error-marker treatment from section
- * 01's feedback roles ("never a fill, never a banner"), driven by
- * `feeds.last_fetch_error_at` (Feed#record_fetch_failure!, set from
- * UpdateFeedsJob).
+ * App-specific — not in RDR-01's bundle.css.
  */
-.sidebar-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 8px;
-  font-size: 12px;
-  color: var(--color-text);
-  text-decoration: none;
-}
+@layer components {
+  /*
+   * App shell: StatusBar pinned on top, the three panes below it (feed tree
+   * at --tree-w, item table flexing, reader at least 480px). Each pane
+   * scrolls on its own; panes sit side by side divided by one rule-strong
+   * hairline, with no outer border (the window is the frame).
+   */
+  .rdr-shell { display: flex; flex-direction: column; height: 100dvh; }
+  .rdr-shell > main { flex: 1; min-height: 0; overflow: auto; }
 
-.sidebar-item:hover:not(.is-selected) {
-  background: color-mix(in oklab, var(--color-sidebar), var(--color-text) 6%);
-}
+  /* The reader only needs its 68ch sans measure plus gutters (~700px), so
+     it takes half of what the tree leaves, clamped to [480px (RDR-01's
+     minimum), 700px]; the item table gets everything else — on wide
+     screens that's where extra width is actually useful. */
+  .rdr-panes { display: grid; grid-template-columns: var(--tree-w) minmax(0, 1fr) clamp(480px, (100vw - var(--tree-w)) / 2, 700px); height: 100%; }
+  .rdr-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: var(--hairline) solid var(--color-rule-strong); }
+  .rdr-pane:last-child { border-right: 0; }
+  .rdr-pane > turbo-frame { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+  .rdr-pane-scroll { flex: 1; min-height: 0; overflow: auto; }
+  .rdr-pane-tree { background: var(--color-paper-2); }
 
-.sidebar-item.has-unread {
-  font-weight: 600;
-}
+  /*
+   * Under 1100px the reader replaces the item table (RDR-01 layout rules).
+   * `data-reading` is toggled by selection_controller.js: set when an item
+   * opens, cleared by the reader's BACK button.
+   */
+  .rdr-back { display: none; }
 
-.sidebar-item.is-selected {
-  background: var(--color-divider);
-}
+  @media (max-width: 1099px) {
+    .rdr-panes { grid-template-columns: var(--tree-w) minmax(0, 1fr); }
+    .rdr-panes[data-reading="true"] > .rdr-pane-items,
+    .rdr-panes:not([data-reading="true"]) > .rdr-pane-reader { display: none; }
+    .rdr-back { display: inline-flex; }
+  }
 
-.sidebar-item.is-selected.is-focused {
-  background: var(--color-accent);
-  color: #fff;
-}
+  /* Links inside rows navigate; they take the row's type, not link colour. */
+  .r-tree a, .r-table a { color: inherit; text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; }
+  .r-tree li:hover:not([aria-selected="true"]) { background: var(--color-paper-3); }
+  /* Marked view row: first in the tree, set off by a strong rule; its
+     count is ink on mark (RDR-01: only ink sits on mark). */
+  .r-tree li.rdr-marked-row { border-bottom-color: var(--color-rule-strong); }
+  .rdr-count-mark { background: var(--color-mark); color: var(--color-ink); }
 
-.sidebar-item.has-fetch-error {
-  opacity: 0.45;
-}
+  /* Item rows always carry a Feed cell (items/_list_item.html.erb); a
+     single feed's table hides it — display:none cells take no column. */
+  .rdr-single-feed .r-feed { display: none; }
 
-.sidebar-item-error-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 9999px;
-  background: var(--color-error);
-}
+  /* Folder rows toggle on click (selection_controller.js#toggleFolder). */
+  .r-tree li.r-folder { cursor: pointer; user-select: none; }
 
-/*
- * TimelineRow (design system section 08, step 2) — the only place an item
- * row gets drawn (app/views/items/_list_item.html.erb). Unread, read,
- * hover, and selected/focused, at the compact metrics from section 03
- * (single line, headline + time) since this app runs one fixed density,
- * not the doc's three-way switch. Starred was removed — there's no
- * starring feature in the app.
- */
-.timeline-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 5px 10px;
-  border-bottom: 1px solid var(--color-divider);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text);
-  text-decoration: none;
-}
+  /*
+   * Selection vs. focus (app/javascript/controllers/selection_controller.js):
+   * both selected rows keep the paper-3 fill, but only the row in the pane
+   * that last had focus keeps the 2px ink bar — it's how a three-pane app
+   * shows where the keyboard is versus what's shown.
+   */
+  .r-tree li[aria-selected="true"]:not(.is-focused),
+  .r-table tr[aria-selected="true"]:not(.is-focused) { box-shadow: none; }
 
-.timeline-row:hover:not(.is-selected) {
-  background: color-mix(in oklab, var(--color-list), var(--color-text) 5%);
-}
+  .r-status select { font: inherit; background: transparent; border: 0; color: inherit; cursor: pointer; padding: 0; }
+  .r-status button { font: inherit; background: transparent; border: 0; color: inherit; cursor: pointer; padding: 0; text-transform: uppercase; }
+  .r-status button:hover { text-decoration: underline; }
 
-.timeline-row.is-read {
-  font-weight: 400;
-  color: var(--color-text-dim);
-}
+  .r-empty { padding: 12px; color: var(--color-ink-3); }
 
-.timeline-row.is-selected {
-  background: var(--color-divider);
-}
+  /* Item table toolbar (unread-only filter, mark all read) under the
+     items panel header. */
+  .rdr-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 8px; border-bottom: var(--hairline) solid var(--color-rule-strong); white-space: nowrap; }
 
-.timeline-row.is-selected.is-focused {
-  background: var(--color-accent);
-  color: #fff;
-}
+  /* FetchLog under the item table: a <details> whose summary is the panel
+     header, capped so the item table keeps most of the pane. */
+  .rdr-log { border-top: var(--hairline) solid var(--color-rule-strong); }
+  .rdr-log > summary { cursor: pointer; list-style: none; justify-content: flex-start; }
+  .rdr-log > summary::-webkit-details-marker { display: none; }
+  .rdr-log > summary::before { content: "▸"; margin-right: 8px; }
+  .rdr-log[open] > summary::before { content: "▾"; }
+  .rdr-log > summary .r-label { overflow: hidden; text-overflow: ellipsis; margin-left: auto; }
+  .rdr-log-scroll { max-height: 30vh; overflow: auto; }
 
-.timeline-row-dot {
-  width: 5px;
-  height: 5px;
-  flex-shrink: 0;
-  border-radius: 9999px;
-}
+  /* Headline link to the original article keeps the headline's colour. */
+  .r-headline a { color: inherit; text-decoration: none; }
+  .r-headline a:hover { text-decoration: underline; }
 
-.timeline-row-dot.is-unread {
-  background: var(--color-accent-dot);
-}
+  /*
+   * Publisher HTML inside .r-body — only what's needed to keep it inside
+   * the measure and legible; RDR-01 says not to restyle publisher content
+   * beyond a reset. These are the tags ItemsHelper::SUMMARY_ALLOWED_TAGS
+   * lets through (Rails' default sanitizer drops tables, so it's an
+   * explicit list, and everything on it gets a rule here).
+   */
+  .r-body h2, .r-body h3, .r-body h4 { font-weight: 600; margin: 24px 0 8px; }
+  .r-body h2 { font-size: 20px; line-height: 26px; }
+  .r-body h3, .r-body h4 { font-size: 16px; line-height: 26px; }
+  .r-body ul, .r-body ol { margin: 0 0 16px; padding-left: 1.25em; }
+  .r-body ul { list-style: square; }
+  .r-body ol { list-style: decimal; }
+  .r-body hr { border: 0; border-top: var(--hairline) solid var(--color-rule); margin: 24px 0; }
+  .r-body img { display: block; max-width: 100%; height: auto; margin: 0 0 16px; }
+  .r-body blockquote { margin: 0 0 16px; padding-left: 12px; border-left: var(--hairline) solid var(--color-rule-strong); color: var(--color-ink-2); }
+  .r-body code { font: 400 13px/1 var(--font-mono); background: var(--color-paper-2); padding: 1px 4px; }
+  .r-body pre { font: 400 13px/18px var(--font-mono); margin: 0 0 16px; padding: 12px; background: var(--color-paper-2); border: var(--hairline) solid var(--color-rule); overflow-x: auto; }
+  .r-body pre code { background: none; padding: 0; }
+  .r-body table { width: 100%; border-collapse: collapse; margin: 0 0 16px; font-size: 14px; line-height: 20px; }
+  .r-body th, .r-body td { border: var(--hairline) solid var(--color-rule); padding: 4px 8px; text-align: left; }
+  .r-body th { font-weight: 600; background: var(--color-paper-2); }
 
-/* Dot goes white on an accent fill so it doesn't disappear into it. */
-.timeline-row.is-selected.is-focused .timeline-row-dot.is-unread {
-  background: #fff;
-}
+  /* Dialogs: a panel on a flat rule-coloured scrim, no shadow. */
+  dialog.r-dialog { width: 400px; max-width: calc(100vw - 32px); margin: auto; padding: 0; border: var(--hairline) solid var(--color-rule-strong); background: var(--color-paper); color: var(--color-ink); }
+  dialog.r-dialog::backdrop { background: var(--color-rule); opacity: .6; }
+  .r-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; }
 
-/*
- * Reading surface (design system section 08, step 3) — the only place
- * feed-supplied HTML is rendered (app/views/items/_item_content.html.erb).
- * Serif at a real measure: section 02's reading scale (title 30/600/1.15,
- * body 17/1.65, byline 12/400 in the UI font, inline code 13/mono) plus
- * section 05's concrete 620px/32px-padding column (superseding section
- * 02's more abstract "66ch" — the assembled mockup calls 620px out as
- * "no new values", i.e. the actual number to use).
- *
- * Body links use --color-accent-dot, not --color-accent: section 01 groups
- * "unread dot" and "body links" as the same job, lifting together in dark
- * mode while --color-accent alone stays reserved for selection fill.
- *
- * Blockquote and table aren't in the doc's swatches (only "figure — full
- * measure, 1px divider border, no radius" is concretely specced for
- * images) — styled here in the same idiom: divider-color 1px lines, no
- * radius, no shadows, nothing else. See ItemsHelper::SUMMARY_ALLOWED_TAGS
- * for why table markup reaches this CSS at all — Rails' sanitizer default
- * strips it.
- */
-.reading-surface {
-  max-width: 620px;
-  margin: 0 auto;
-  padding: 32px 32px 40px;
-}
-
-.reading-surface-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--color-text-faint);
-  margin-bottom: 8px;
-}
-
-.reading-surface-feed {
-  font-weight: 600;
-  color: var(--color-accent-dot);
-}
-
-.reading-surface-title {
-  font-family: "Source Serif 4", Georgia, serif;
-  font-size: 30px;
-  font-weight: 600;
-  line-height: 1.15;
-  letter-spacing: -0.02em;
-  margin: 0 0 20px;
-  color: var(--color-text);
-}
-
-.reading-surface-title a {
-  color: inherit;
-  text-decoration: none;
-}
-
-.reading-surface-body {
-  font-family: "Source Serif 4", Georgia, serif;
-  font-size: 17px;
-  line-height: 1.65;
-  color: var(--color-text);
-}
-
-.reading-surface-body > * + * {
-  margin-top: 16px;
-}
-
-.reading-surface-body h2 {
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.reading-surface-body h3,
-.reading-surface-body h4 {
-  font-size: 17px;
-  font-weight: 600;
-}
-
-.reading-surface-body ul,
-.reading-surface-body ol {
-  padding-left: 1.25em;
-}
-
-.reading-surface-body a {
-  color: var(--color-accent-dot);
-}
-
-.reading-surface-body img {
-  display: block;
-  max-width: 100%;
-  height: auto;
-  border: 1px solid var(--color-divider);
-}
-
-.reading-surface-body blockquote {
-  margin: 0;
-  padding-left: 16px;
-  border-left: 1px solid var(--color-divider);
-  color: var(--color-text-dim);
-}
-
-.reading-surface-body code {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 13px;
-  background: var(--color-list);
-  padding: 1px 4px;
-}
-
-.reading-surface-body pre {
-  font-family: "JetBrains Mono", ui-monospace, monospace;
-  font-size: 13px;
-  padding: 12px;
-  border: 1px solid var(--color-divider);
-  overflow-x: auto;
-}
-
-.reading-surface-body pre code {
-  background: none;
-  padding: 0;
-}
-
-.reading-surface-body table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 15px;
-}
-
-.reading-surface-body th,
-.reading-surface-body td {
-  border: 1px solid var(--color-divider);
-  padding: 6px 10px;
-  text-align: left;
-}
-
-/*
- * Buttons, fields, and dialog (design system section 08, step 4 — the doc's
- * own framing: "spec it here [the one Add Feed dialog] and every future
- * dialog is assembly"). Classes below are components, not scoped to this
- * one dialog, per that framing. Menus aren't included — the doc names them
- * in step 4's list but never specs one beyond the color-role sweep
- * context_menu.css already got in step 1; there's nothing new to apply.
- *
- * Deliberately not built: the button literally going HTML `disabled` after
- * a failed submission (the doc's "2 · Failure" panel shows it that way) —
- * that's an interaction behavior, not a color/shape spec, and would block
- * resubmitting the fixed URL without added JS to re-enable it on input.
- * `.btn:disabled` exists so the state has correct styling *if* something
- * disables a button, but this pass doesn't wire that up. Same for dialog
- * "3 · Confirm — multiple feeds": no feed-autodiscovery feature exists to
- * drive it, so it's not built.
- */
-.btn {
-  height: 26px;
-  padding: 0 12px;
-  border-radius: 2px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  border: 1px solid transparent;
-  cursor: pointer;
-}
-
-.btn-primary {
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #fff;
-  font-weight: 600;
-}
-
-/* The doc's literal "Pressed" shade — fixed, not derived, since
-   --color-accent itself is already constant across light/dark. */
-.btn-primary:hover,
-.btn-primary:active {
-  background: #a34400;
-  border-color: #a34400;
-}
-
-.btn-secondary {
-  background: transparent;
-  border-color: var(--color-divider);
-  color: var(--color-text-dim);
-}
-
-.btn-destructive {
-  background: transparent;
-  border-color: var(--color-error);
-  color: var(--color-error);
-}
-
-.btn:disabled {
-  background: var(--color-list);
-  border-color: var(--color-divider);
-  color: var(--color-text-faint);
-  font-weight: 600;
-  cursor: default;
-}
-
-.field {
-  height: 28px;
-  width: 100%;
-  padding: 0 8px;
-  border: 1px solid var(--color-divider);
-  background: var(--color-reading);
-  font-size: 12px;
-  color: var(--color-text);
-}
-
-/* "1px black border — no glow, no accent ring" — var(--color-text) rather
-   than a literal black, so it's still visible against a dark background. */
-.field:focus {
-  outline: none;
-  border-color: var(--color-text);
-}
-
-.field.is-invalid {
-  border-color: var(--color-error);
-}
-
-.field-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-dim);
-}
-
-.field-hint {
-  font-size: 11px;
-  color: var(--color-text-faint);
-}
-
-.field-error {
-  display: flex;
-  gap: 6px;
-  align-items: flex-start;
-  font-size: 11px;
-  line-height: 1.4;
-  color: var(--color-error);
-}
-
-.field-error::before {
-  content: "";
-  width: 5px;
-  height: 5px;
-  margin-top: 5px;
-  flex-shrink: 0;
-  background: var(--color-error);
-}
-
-.field-group {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-}
-
-/* Modal border is text-colored, not a shadow — separation without depth. */
-dialog.dialog {
-  width: 340px;
-  max-width: calc(100vw - 40px);
-  padding: 0;
-  border: 1px solid var(--color-text);
-  background: var(--color-reading);
-  color: var(--color-text);
-}
-
-/* "Scrim is the divider value at full opacity, not a black wash." Native
-   <dialog> already swallows backdrop clicks without dismissing, traps Tab,
-   and closes on Esc — no JS needed for any of that. */
-dialog.dialog::backdrop {
-  background: var(--color-divider);
-  opacity: 1;
-}
-
-.dialog-header {
-  height: 32px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  border-bottom: 1px solid var(--color-divider);
-  background: var(--color-list);
-}
-
-.dialog-title {
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: -0.01em;
-}
-
-.dialog-close {
-  margin-left: auto;
-  background: transparent;
-  border: 0;
-  padding: 0;
-  font-size: 12px;
-  color: var(--color-text-faint);
-  cursor: pointer;
-}
-
-.dialog-body {
-  padding: 16px 16px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.dialog-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  padding-top: 2px;
+  /* Standalone pages (sign in, sign up, password reset). */
+  .r-page { max-width: 400px; margin: 48px auto; padding: 0 16px; }
 }

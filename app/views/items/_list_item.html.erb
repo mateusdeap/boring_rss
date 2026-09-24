@@ -1,7 +1,18 @@
-<article id="<%= dom_id item %>" class="timeline-row<%= " is-read" if item.read? %>">
-  <span class="timeline-row-dot<%= " is-unread" unless item.read? %>"></span>
-  <%= link_to item.title, item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false }, class: "min-w-0 flex-1 truncate" %>
-  <% if item.published_at %>
-    <span class="text-[11px] text-text-faint shrink-0"><%= item.published_at.strftime("%-l:%M") %></span>
-  <% end %>
-</article>
+<%# RDR-01 ItemTable row. Prepended into #items / replaced by dom_id over
+    Turbo Streams (Item#broadcast_creation, Item#mark_read!,
+    Items::MarksController). The title text sits in its own <span> so a
+    marked row highlights just the words (RDR-01's `mark` token), and
+    data-mark-url/data-marked let the M key toggle it without the reader. %>
+<tr id="<%= dom_id item %>" class="<%= class_names(item.read? ? "is-read" : "is-unread", "is-marked": item.marked?) %>" aria-selected="false"
+    data-mark-url="<%= item_mark_path(item) %>" data-marked="<%= item.marked? %>">
+  <td><% unless item.read? %><span class="r-dot" aria-label="Unread"></span><% end %></td>
+  <td class="r-title">
+    <%= link_to item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false } do %>
+      <span><%= item.title %></span><% if item.marked? %><span class="sr-only"> (marked)</span><% end %>
+    <% end %>
+  </td>
+  <%# Always rendered so a streamed replace fits either table; hidden by CSS
+      in a single feed's view (.rdr-single-feed), shown in the Marked view. %>
+  <td class="r-feed r-2"><%= item.feed.title %></td>
+  <td class="r-num r-dim"><%= rdr_age_tag(item.published_at) if item.published_at %></td>
+</tr>

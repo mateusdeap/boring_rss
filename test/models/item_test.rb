@@ -14,9 +14,13 @@ class ItemTest < ActiveSupport::TestCase
     assert_not item.read?
   end
 
-  test "creating an item broadcasts a feed row replace to the feeds stream" do
-    assert_turbo_stream_broadcasts :feeds do
-      Item.create!(feed: feeds(:one), title: "t", link: "l")
+  test "creating an item broadcasts a feed row replace to the owner's feeds stream only" do
+    feed = feeds(:one)
+
+    assert_no_turbo_stream_broadcasts :feeds do
+      assert_turbo_stream_broadcasts [ feed.user, :feeds ] do
+        Item.create!(feed:, title: "t", link: "l")
+      end
     end
   end
 

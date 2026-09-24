@@ -1,0 +1,7 @@
+tech:
+  user: one
+  name: Tech
+
+other_users:
+  user: two
+  name: Theirs

@@ -1,10 +1,14 @@
 class FeedsController < ApplicationController
+  include FeedTreeStreams
+
   def index
-    @feeds = Current.user.feeds
   end
 
   def show
     @feed = Current.user.feeds.find(params[:id])
+    @unread_count = @feed.unread_count
+    @items = @feed.items.order(published_at: :desc)
+    @items = @items.unread if Current.user.unread_only?
   end
 
   def new
@@ -13,6 +17,7 @@ class FeedsController < ApplicationController
 
   def create
     feed = InitializeFeed.new(link: feed_params[:link], user: Current.user).call
+    feed.folder_name = feed_params[:folder_name] if feed.errors.empty?
 
     # `save` calls `valid?`, which clears `errors` before re-running
     # validations — that would wipe the specific message InitializeFeed
@@ -21,9 +26,7 @@ class FeedsController < ApplicationController
     # there's nothing to persist and nothing left to validate.
     if feed.errors.empty? && feed.save
       respond_to do |format|
-        format.turbo_stream do
-          render turbo_stream: turbo_stream.append(:feeds, partial: "feeds/feed", locals: { feed: feed })
-        end
+        format.turbo_stream { render turbo_stream: tree_streams }
         format.html { redirect_to :feeds }
       end
     else
@@ -38,12 +41,27 @@ class FeedsController < ApplicationController
     end
   end
 
+  # Moves a feed between folders (the feed tree's "Move to folder" dialog).
+  def update
+    feed = Current.user.feeds.find(params[:id])
+    feed.folder_name = params.expect(feed: [ :folder_name ])[:folder_name]
+
+    if feed.save
+      respond_to do |format|
+        format.turbo_stream { render turbo_stream: tree_streams }
+        format.html { redirect_to :feeds }
+      end
+    else
+      render_dialog_error "move-feed-error", feed
+    end
+  end
+
   def destroy
     feed = Current.user.feeds.find(params[:id])
     feed.destroy
 
     respond_to do |format|
-      format.turbo_stream { render turbo_stream: turbo_stream.remove(feed) }
+      format.turbo_stream { render turbo_stream: tree_streams }
       format.html { redirect_to :feeds }
     end
   end
@@ -51,6 +69,6 @@ class FeedsController < ApplicationController
   private
 
   def feed_params
-    params.expect(feed: [ :link ])
+    params.expect(feed: [ :link, :folder_name ])
   end
 end
