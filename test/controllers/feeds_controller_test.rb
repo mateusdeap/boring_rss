@@ -101,4 +101,27 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
     assert_nil feeds(:two).reload.folder_id
   end
+
+  test "show lists only unread items when the user's filter is on" do
+    feed = feeds(:one)
+    read_item = feed.items.create!(title: "Already read", link: "https://example.com/r", read: true)
+    unread_item = feed.items.create!(title: "Still unread", link: "https://example.com/u")
+
+    get feed_url(feed)
+    assert_select "tr#item_#{read_item.id}"
+
+    users(:one).update!(unread_only: true)
+    get feed_url(feed)
+    assert_select "tr#item_#{read_item.id}", count: 0
+    assert_select "tr#item_#{unread_item.id}"
+    assert_select "button[aria-pressed=true][data-shortcut=u]"
+  end
+
+  test "mark all read is disabled with its reason when nothing is unread" do
+    feeds(:one).items.update_all(read: true)
+
+    get feed_url(feeds(:one))
+
+    assert_select "button[disabled]", text: /Mark all read — none unread/
+  end
 end

@@ -1,7 +1,15 @@
 <%# RDR-01 ItemTable row. Prepended into #items / replaced by dom_id over
-    Turbo Streams (Item#broadcast_creation, Item#mark_read!). %>
-<tr id="<%= dom_id item %>" class="<%= item.read? ? "is-read" : "is-unread" %>" aria-selected="false">
+    Turbo Streams (Item#broadcast_creation, Item#mark_read!,
+    Items::MarksController). The title text sits in its own <span> so a
+    marked row highlights just the words (RDR-01's `mark` token), and
+    data-mark-url/data-marked let the M key toggle it without the reader. %>
+<tr id="<%= dom_id item %>" class="<%= class_names(item.read? ? "is-read" : "is-unread", "is-marked": item.marked?) %>" aria-selected="false"
+    data-mark-url="<%= item_mark_path(item) %>" data-marked="<%= item.marked? %>">
   <td><% unless item.read? %><span class="r-dot" aria-label="Unread"></span><% end %></td>
-  <td class="r-title"><%= link_to item.title, item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false } %></td>
+  <td class="r-title">
+    <%= link_to item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false } do %>
+      <span><%= item.title %></span><% if item.marked? %><span class="sr-only"> (marked)</span><% end %>
+    <% end %>
+  </td>
   <td class="r-num r-dim"><%= rdr_age_tag(item.published_at) if item.published_at %></td>
 </tr>

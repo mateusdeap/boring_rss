@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_170000) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
@@ -59,6 +59,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_150000) do
     t.integer "feed_id", null: false
     t.string "guid"
     t.string "link"
+    t.boolean "marked", default: false, null: false
     t.datetime "published_at"
     t.boolean "read", default: false, null: false
     t.string "summary"
@@ -82,6 +83,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_150000) do
     t.string "email_address", null: false
     t.string "password_digest", null: false
     t.string "theme", default: "system", null: false
+    t.boolean "unread_only", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true
   end

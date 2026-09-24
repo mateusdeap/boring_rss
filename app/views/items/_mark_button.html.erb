@@ -1,0 +1,8 @@
+<%# Reader's MARK toggle. Replaced by Items::MarksController's stream
+    response, whichever way the mark was toggled (this button or M). %>
+<span id="<%= dom_id(item, :mark) %>" class="contents">
+  <%= button_to item_mark_path(item), method: item.marked? ? :delete : :post, form: { class: "contents" },
+        class: "r-btn", aria: { pressed: item.marked? } do %>
+    <span class="r-key">M</span> <%= item.marked? ? "Marked" : "Mark" %>
+  <% end %>
+</span>

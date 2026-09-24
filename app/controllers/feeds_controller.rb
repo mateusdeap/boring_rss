@@ -6,6 +6,9 @@ class FeedsController < ApplicationController
 
   def show
     @feed = Current.user.feeds.find(params[:id])
+    @unread_count = @feed.unread_count
+    @items = @feed.items.order(published_at: :desc)
+    @items = @items.unread if Current.user.unread_only?
   end
 
   def new

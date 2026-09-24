@@ -298,6 +298,10 @@ body[data-theme="dark"] {
 
   .r-empty { padding: 12px; color: var(--color-ink-3); }
 
+  /* Item table toolbar (unread-only filter, mark all read) under the
+     items panel header. */
+  .rdr-toolbar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-bottom: var(--hairline) solid var(--color-rule-strong); white-space: nowrap; overflow-x: auto; }
+
   /* FetchLog under the item table: a <details> whose summary is the panel
      header, capped so the item table keeps most of the pane. */
   .rdr-log { border-top: var(--hairline) solid var(--color-rule-strong); }

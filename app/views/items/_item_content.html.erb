@@ -2,7 +2,10 @@
     then the article in sans at the 68ch measure. %>
 <div class="r-panel-h">
   03 READER
-  <button type="button" class="r-btn rdr-back" data-action="selection#back"><span class="r-key">ESC</span> Back to items</button>
+  <span class="flex gap-2">
+    <button type="button" class="r-btn rdr-back" data-action="selection#back"><span class="r-key">ESC</span> Back to items</button>
+    <%= render "items/mark_button", item: %>
+  </span>
 </div>
 <article class="r-reader rdr-pane-scroll" data-item-id="<%= item.id %>">
   <% safe_link = safe_item_link(item.link) %>

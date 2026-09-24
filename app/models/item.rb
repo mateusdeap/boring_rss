@@ -2,6 +2,7 @@ class Item < ApplicationRecord
   belongs_to :feed
 
   scope :unread, -> { where(read: false) }
+  scope :marked, -> { where(marked: true) }
 
   after_create_commit :broadcast_creation
 

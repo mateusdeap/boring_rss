@@ -12,6 +12,15 @@ class Feed < ApplicationRecord
     items.unread.count
   end
 
+  # "Mark all read" for this feed. One UPDATE, no per-item callbacks — the
+  # caller re-renders the item list; the tree row (and its folder's) is
+  # re-broadcast here. Returns how many items changed.
+  def mark_all_read!
+    count = items.unread.update_all(read: true, updated_at: Time.current)
+    broadcast_row_later if count.positive?
+    count
+  end
+
   def fetch_failed?
     last_fetch_error_at?
   end

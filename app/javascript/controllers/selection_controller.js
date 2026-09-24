@@ -18,6 +18,8 @@ import { Controller } from "@hotwired/stimulus"
 //             pattern); Enter or → opens a feed; on a folder, Enter
 //             toggles it, → expands, ← collapses (← on a feed inside a
 //             folder moves to the folder)
+//   M         mark / unmark the item under the cursor
+//   U         unread-only filter    ⇧R  mark all read (current feed)
 //   A         add feed        L  toggle the fetch log
 //   O         open the current item's original page
 //   ?         show all keys   Esc  back to items (narrow layout)
@@ -70,17 +72,24 @@ export default class extends Controller {
     this.element.dataset.reading = "false"
   }
 
-  // keydown@document — page-wide single-key shortcuts.
+  // keydown@document — page-wide single-key shortcuts. Letters are matched
+  // case-insensitively with Shift as the only modifier ("shift+r"), not by
+  // event.key's case: Caps Lock flips the case without Shift, which would
+  // otherwise turn a plain R into "mark all read" and silence J/K/M/U.
   key(event) {
     if (this.ignored(event)) return
 
-    switch (event.key) {
+    switch (this.combo(event)) {
       case "j": return this.handled(event, () => this.moveItem(1))
       case "k": return this.handled(event, () => this.moveItem(-1))
       case "Enter":
         // Enter on a focused control keeps its own meaning.
         if (event.target.closest("a, button, summary")) return
         return this.openItemUnderCursor(event)
+      case "m": return this.handled(event, () => this.toggleMark())
+      case "u":
+      case "shift+r":
+        return this.clickShortcut(event, this.combo(event))
       case "a": return this.handled(event, () => document.getElementById("add-feed-dialog")?.showModal())
       case "l": return this.handled(event, () => this.toggleLog())
       case "o": return this.handled(event, () => this.element.querySelector("[data-original-link]")?.click())
@@ -170,6 +179,38 @@ export default class extends Controller {
 
     const link = document.getElementById(this.selected.itemRowId)?.querySelector("a")
     if (link) this.handled(event, () => link.click())
+  }
+
+  // M acts on the cursor row (J/K), else on the item open in the reader.
+  // Items::MarksController answers with Turbo Streams for the row and the
+  // reader's MARK button; render them here since this isn't a form submit.
+  async toggleMark() {
+    const readerId = this.element.querySelector("[data-item-id]")?.dataset.itemId
+    const row = (this.selected.itemRowId && document.getElementById(this.selected.itemRowId)) ||
+      (readerId && document.getElementById(`item_${readerId}`))
+    if (!row?.dataset.markUrl) return
+
+    const response = await fetch(row.dataset.markUrl, {
+      method: row.dataset.marked === "true" ? "DELETE" : "POST",
+      headers: {
+        "Accept": "text/vnd.turbo-stream.html",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      }
+    })
+    if (response.ok) window.Turbo.renderStreamMessage(await response.text())
+  }
+
+  // Toolbar buttons that carry data-shortcut (feeds/show.html.erb). A
+  // disabled one (e.g. "Mark all read — none unread") does nothing.
+  clickShortcut(event, combo) {
+    const control = this.element.querySelector(`[data-shortcut="${combo}"]`)
+    if (control && !control.disabled) this.handled(event, () => control.click())
+  }
+
+  combo(event) {
+    if (!/^[a-z]$/i.test(event.key)) return event.key
+    const letter = event.key.toLowerCase()
+    return event.shiftKey ? `shift+${letter}` : letter
   }
 
   toggleLog() {
