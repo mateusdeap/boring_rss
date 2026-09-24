@@ -1,10 +1,7 @@
-<article id="<%= dom_id item %>">
-  <header>
-    <h2 class="flex items-center gap-1 text-sm">
-      <%= link_to item.title, item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false } %>
-      <% unless item.read? %>
-        <span class="inline-block w-2 h-2 rounded-full bg-accent-dot"></span>
-      <% end %>
-    </h2>
-  </header>
+<article id="<%= dom_id item %>" class="timeline-row<%= " is-read" if item.read? %>">
+  <span class="timeline-row-dot<%= " is-unread" unless item.read? %>"></span>
+  <%= link_to item.title, item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false }, class: "min-w-0 flex-1 truncate" %>
+  <% if item.published_at %>
+    <span class="text-[11px] text-text-faint shrink-0"><%= item.published_at.strftime("%-l:%M") %></span>
+  <% end %>
 </article>

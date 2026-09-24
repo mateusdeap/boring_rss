@@ -50,6 +50,27 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_match "<p>safe</p>", response.body
   end
 
+  test "show keeps table markup instead of stripping it like Rails' sanitize default" do
+    @item.update!(summary: "<table><tr><td>cell</td></tr></table>")
+
+    get item_url(@item)
+
+    assert_response :success
+    assert_match "<table>", response.body
+    assert_match "<td>cell</td>", response.body
+  end
+
+  test "show still strips tags outside the reading-surface allow-list" do
+    @item.update!(summary: "<script>alert('xss')</script><marquee>ok</marquee><p>safe</p>")
+
+    get item_url(@item)
+
+    assert_response :success
+    assert_no_match "<script>", response.body
+    assert_no_match "<marquee>", response.body
+    assert_match "<p>safe</p>", response.body
+  end
+
   test "show only links item.link when it is a safe http(s) url" do
     @item.update!(link: "javascript:alert('xss')")
 

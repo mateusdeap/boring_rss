@@ -1,10 +1,9 @@
-<article id="<%= dom_id feed %>" data-feed-id="<%= feed.id %>">
-  <header>
-    <p class="text-sm flex items-center gap-1">
-      <%= link_to feed.title, feed_path(feed.id), data: { turbo_frame: "current_feed" } %>
-      <% if feed.unread_count.positive? %>
-        <span class="text-xs border rounded-full px-1.5"><%= feed.unread_count %></span>
-      <% end %>
-    </p>
-  </header>
+<article id="<%= dom_id feed %>" data-feed-id="<%= feed.id %>" class="sidebar-item<%= " has-unread" if feed.unread_count.positive? %><%= " has-fetch-error" if feed.last_fetch_error_at? %>">
+  <%= link_to feed.title, feed_path(feed.id), data: { turbo_frame: "current_feed" }, class: "min-w-0 flex-1 truncate" %>
+  <% if feed.unread_count.positive? %>
+    <span class="text-[11px] shrink-0"><%= feed.unread_count %></span>
+  <% end %>
+  <% if feed.last_fetch_error_at? %>
+    <span class="sidebar-item-error-dot shrink-0"></span>
+  <% end %>
 </article>

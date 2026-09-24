@@ -10,8 +10,10 @@ class UpdateFeedsJob < ApplicationJob
       new_entries = parsed_feed.entries.reject { |entry| existing_identities.include?(entry.guid.presence || entry.link) }
       new_items = InitializeItems.new(new_entries).call
       feed.items << new_items
-    rescue RSS::Error => e
+      feed.record_fetch_success!
+    rescue StandardError => e
       Rails.logger.warn("Skipping feed #{feed.id} (#{feed.feed_url}): #{e.message}")
+      feed.record_fetch_failure!
     end
   end
 end

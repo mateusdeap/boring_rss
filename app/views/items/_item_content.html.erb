@@ -1,0 +1,20 @@
+<article class="reading-surface" id="<%= dom_id item %>">
+  <header class="reading-surface-meta">
+    <span class="reading-surface-feed"><%= item.feed.title %></span>
+    <% if item.published_at %>
+      <span>· <%= item.published_at.strftime("%-d %B") %></span>
+    <% end %>
+  </header>
+
+  <h1 class="reading-surface-title">
+    <% if (safe_link = safe_item_link(item.link)) %>
+      <%= link_to item.title, safe_link %>
+    <% else %>
+      <%= item.title %>
+    <% end %>
+  </h1>
+
+  <div class="reading-surface-body">
+    <%= sanitized_summary(item) %>
+  </div>
+</article>

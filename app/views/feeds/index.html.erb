@@ -1,27 +1,27 @@
-<div class="flex flex-col w-full">
+<div class="flex flex-col w-full h-screen">
   <div class="flex items-center gap-2">
     <h1 class="text-2xl font-bold my-0">Feeds</h1>
-    <button class="text-xs flex border px-2" command="show-modal" commandfor="my-dialog">Add Feed</button>
+    <button class="btn btn-secondary" command="show-modal" commandfor="my-dialog">Add Feed</button>
   </div>
   <%= turbo_stream_from :feeds %>
-  <div class="flex gap-2" data-controller="context-menu">
-    <div class="w-1/6 flex-none">
-      <div class="flex flex-col gap-2" id="feeds" data-action="contextmenu->context-menu#open">
+  <div class="flex gap-2 grow" data-controller="context-menu selection">
+    <div class="w-1/6 flex-none bg-sidebar">
+      <div class="flex flex-col" id="feeds" data-action="contextmenu->context-menu#open">
         <%= render partial: "feeds/feed", collection: @feeds %>
       </div>
     </div>
-    <div class="w-1/4 flex-none">
-      <turbo-frame id="current_feed">
+    <div class="w-1/4 flex-none bg-list">
+      <turbo-frame id="current_feed" data-action="turbo:frame-render->selection#feedNavigated">
       </turbo-frame>
     </div>
-    <div>
-      <turbo-frame id="current_item">
+    <div class="flex-1 bg-reading">
+      <turbo-frame id="current_item" data-action="turbo:frame-render->selection#itemNavigated">
       </turbo-frame>
     </div>
   <%= render "feeds/context_menu" %>
   </div>
 </div>
 
-<dialog id="my-dialog" class="m-auto p-2 w-lg" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
+<dialog id="my-dialog" class="dialog m-auto" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
   <%= render "form", feed: Feed.new %>
 </dialog>

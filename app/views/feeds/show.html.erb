@@ -1,6 +1,6 @@
-<turbo-frame id="current_feed">
+<turbo-frame id="current_feed" data-action="turbo:frame-render->selection#feedNavigated">
   <%= turbo_stream_from @feed %>
-  <div id="items">
+  <div id="items" data-feed-id="<%= @feed.id %>">
     <%= render partial: "items/list_item", collection: @feed.items.order(published_at: :desc), as: :item %>
   </div>
 </turbo-frame>

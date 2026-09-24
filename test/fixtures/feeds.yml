@@ -3,11 +3,11 @@
 one:
   title: MyString
   link: MyString
-  feed_url: MyString
+  feed_url: https://feed-one.example.com/rss
   user: one
 
 two:
   title: MyString
   link: MyString
-  feed_url: MyString
+  feed_url: https://feed-two.example.com/rss
   user: two

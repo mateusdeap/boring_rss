@@ -14,7 +14,12 @@ class FeedsController < ApplicationController
   def create
     feed = InitializeFeed.new(link: feed_params[:link], user: Current.user).call
 
-    if feed.save
+    # `save` calls `valid?`, which clears `errors` before re-running
+    # validations — that would wipe the specific message InitializeFeed
+    # already attached on its RSS::Error rescue path and replace it with a
+    # generic `can't be blank`. Skip `save` entirely once that's happened;
+    # there's nothing to persist and nothing left to validate.
+    if feed.errors.empty? && feed.save
       respond_to do |format|
         format.turbo_stream do
           render turbo_stream: turbo_stream.append(:feeds, partial: "feeds/feed", locals: { feed: feed })

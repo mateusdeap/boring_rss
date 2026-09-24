@@ -16,7 +16,7 @@ class InitializeFeed
     )
   rescue RSS::Error
     feed = Feed.new(user: @user)
-    feed.errors.add(:link, "Invalid link")
+    feed.errors.add(:link, "Couldn't find a feed at that address.")
     feed
   end
 end
