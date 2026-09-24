@@ -256,7 +256,11 @@ body[data-theme="dark"] {
   .rdr-shell { display: flex; flex-direction: column; height: 100dvh; }
   .rdr-shell > main { flex: 1; min-height: 0; overflow: auto; }
 
-  .rdr-panes { display: grid; grid-template-columns: var(--tree-w) minmax(0, 2fr) minmax(480px, 3fr); height: 100%; }
+  /* The reader only needs its 68ch sans measure plus gutters (~700px), so
+     it takes half of what the tree leaves, clamped to [480px (RDR-01's
+     minimum), 700px]; the item table gets everything else — on wide
+     screens that's where extra width is actually useful. */
+  .rdr-panes { display: grid; grid-template-columns: var(--tree-w) minmax(0, 1fr) clamp(480px, (100vw - var(--tree-w)) / 2, 700px); height: 100%; }
   .rdr-pane { display: flex; flex-direction: column; min-width: 0; min-height: 0; border-right: var(--hairline) solid var(--color-rule-strong); }
   .rdr-pane:last-child { border-right: 0; }
   .rdr-pane > turbo-frame { display: flex; flex-direction: column; flex: 1; min-height: 0; }
@@ -309,7 +313,7 @@ body[data-theme="dark"] {
 
   /* Item table toolbar (unread-only filter, mark all read) under the
      items panel header. */
-  .rdr-toolbar { display: flex; align-items: center; gap: 8px; padding: 4px 8px; border-bottom: var(--hairline) solid var(--color-rule-strong); white-space: nowrap; overflow-x: auto; }
+  .rdr-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 8px; border-bottom: var(--hairline) solid var(--color-rule-strong); white-space: nowrap; }
 
   /* FetchLog under the item table: a <details> whose summary is the panel
      header, capped so the item table keeps most of the pane. */
