@@ -1,0 +1,31 @@
+<%# RDR-01 StatusBar. The FEEDS/UNREAD/LAST/ERR cells are recomputed
+    client-side by status_bar_controller.js from the feed tree's rows, which
+    already update live over the user's own feeds stream (Feed#broadcast_row)
+    — so the bar can never disagree with the tree and needs no broadcast of
+    its own. Off the feeds page (no tree) those cells aren't rendered. %>
+<div class="r-status" role="status" data-controller="status-bar">
+  <div class="r-status-id">BORING RSS</div>
+  <% if authenticated? && controller_name == "feeds" && action_name == "index" %>
+    <div><span class="r-label">Feeds</span> <span data-status-bar-target="feeds">0</span></div>
+    <div><span class="r-label">Unread</span> <span class="font-semibold text-signal" data-status-bar-target="unread">0</span></div>
+    <div><span class="r-label">Last fetch</span> <span data-status-bar-target="last">—</span></div>
+    <div><span class="r-code r-code-idle" data-status-bar-target="errors">0 ERR</span></div>
+  <% end %>
+  <div class="r-grow"></div>
+  <% if authenticated? && controller_name == "feeds" && action_name == "index" %>
+    <div><button type="button" command="show-modal" commandfor="keys-dialog"><span class="r-key">?</span> Keys</button></div>
+  <% end %>
+  <% if authenticated? %>
+    <div><span class="r-label">User</span> <%= Current.user.email_address %></div>
+    <div>
+      <%= form_with model: Current.user, url: preferences_path, method: :patch, data: { controller: "theme-select" } do |f| %>
+        <%= f.label :theme, "Theme", class: "r-label" %>
+        <%= f.select :theme, theme_options, {}, data: { action: "change->theme-select#submit" } %>
+      <% end %>
+    </div>
+  <% end %>
+  <div><button type="button" command="show-modal" commandfor="tip-dialog">Tip</button></div>
+  <% if authenticated? %>
+    <div><%= button_to "Sign out", session_path, method: :delete, form: { class: "contents" } %></div>
+  <% end %>
+</div>

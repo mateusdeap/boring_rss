@@ -1,21 +1,21 @@
 <turbo-frame id="new-feed">
-  <div class="dialog-header">
-    <span class="dialog-title">Add Feed</span>
-    <button type="button" class="dialog-close" commandfor="my-dialog" command="close" aria-label="Close">✕</button>
-  </div>
-  <%= form_with model: feed, local: true, method: "dialog", class: "dialog-body" do |f| %>
-    <div class="field-group">
-      <%= f.label :link, "Feed URL", class: "field-label" %>
-      <%= f.text_field :link, autofocus: true, class: [ "field", ("is-invalid" if feed.errors[:link].any?) ].compact.join(" ") %>
-      <% if feed.errors[:link].any? %>
-        <span class="field-error"><%= feed.errors[:link].to_sentence %></span>
-      <% else %>
-        <span class="field-hint">The feed's RSS or Atom URL.</span>
-      <% end %>
+  <div class="r-panel-h">ADD FEED</div>
+  <%= form_with model: feed, local: true, method: "dialog", class: "r-stack r-pad" do |f| %>
+    <% failed = feed.errors[:link].any? %>
+    <div class="r-field" <%= "data-state=fail" if failed %>>
+      <%= f.label :link, "Feed URL", class: "r-label" %>
+      <%= f.text_field :link, autofocus: true, placeholder: "https://example.com/feed.xml", class: "r-input", aria: { invalid: failed, describedby: "feed_link_help" } %>
+      <span class="r-help" id="feed_link_help">
+        <% if failed %>
+          ERR <%= feed.errors[:link].to_sentence %>
+        <% else %>
+          RSS or Atom URL.
+        <% end %>
+      </span>
     </div>
-    <div class="dialog-actions">
-      <button type="button" class="btn btn-secondary" commandfor="my-dialog" command="close">Cancel</button>
-      <%= f.submit "Add Feed", class: "btn btn-primary" %>
+    <div class="r-dialog-actions">
+      <button type="button" class="r-btn" commandfor="add-feed-dialog" command="close"><span class="r-key">ESC</span> Cancel</button>
+      <%= f.submit "Add feed", class: "r-btn r-btn-primary" %>
     </div>
   <% end %>
 </turbo-frame>

@@ -1,10 +1,7 @@
 <div id="context-menu" data-context-menu-target="menu" class="hidden">
-  <%= link_to "#", data: {
+  <%= link_to "Delete feed", "#", data: {
     context_menu_target: "deleteLink",
     confirm: "Are you sure",
     turbo_method: :delete
-  } do %>
-    <%= heroicon "trash", variant: :micro %>
-      <p>Delete Feed</p>
-  <% end %>
+  } %>
 </div>

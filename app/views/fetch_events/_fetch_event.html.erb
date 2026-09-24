@@ -1,0 +1,9 @@
+<%# RDR-01 FetchLog row. Prepended live into #fetch_log by
+    FetchEvent#broadcast_to_log. %>
+<tr id="<%= dom_id fetch_event %>">
+  <td class="r-dim" title="<%= rdr_time(fetch_event.created_at) %>"><%= fetch_event.created_at.utc.strftime("%H:%M:%S") %></td>
+  <td><%= status_code_tag fetch_event.status %></td>
+  <td class="r-num r-dim"><%= fetch_event.bytes ? rdr_bytes(fetch_event.bytes) : "—" %></td>
+  <td class="r-num r-dim"><%= fetch_event.duration_ms ? "#{rdr_number(fetch_event.duration_ms)} ms" : "—" %></td>
+  <td class="<%= "r-2" unless fetch_event.new_items_count.positive? %>" title="<%= fetch_event.detail %>"><%= fetch_event.detail %></td>
+</tr>

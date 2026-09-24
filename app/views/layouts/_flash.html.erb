@@ -1,0 +1,8 @@
+<%# Flash as RDR-01 status lines: the code word carries the meaning, colour
+    only reinforces it. %>
+<% if (alert = flash[:alert]) %>
+  <p id="alert" role="alert"><span class="r-code r-code-fail">ERR</span> <%= alert %></p>
+<% end %>
+<% if (notice = flash[:notice]) %>
+  <p id="notice" role="status"><span class="r-code r-code-ok">OK</span> <%= notice %></p>
+<% end %>

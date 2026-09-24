@@ -39,7 +39,7 @@ export default class extends Controller {
   }
 
   getFeedId(clickedElement) {
-    return clickedElement.closest("article").dataset.feedId;
+    return clickedElement.closest("[data-feed-id]")?.dataset.feedId;
   }
 
   positionMenu(event) {

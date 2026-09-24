@@ -1,6 +1,33 @@
 <turbo-frame id="current_feed" data-action="turbo:frame-render->selection#feedNavigated">
   <%= turbo_stream_from @feed %>
-  <div id="items" data-feed-id="<%= @feed.id %>">
-    <%= render partial: "items/list_item", collection: @feed.items.order(published_at: :desc), as: :item %>
+  <div class="r-panel-h">
+    <span class="truncate">02 ITEMS — <%= @feed.title %></span>
+    <span class="r-label"><span class="r-key">J</span> <span class="r-key">K</span> Move · <span class="r-key">↵</span> Open</span>
   </div>
+  <div class="rdr-pane-scroll">
+    <table class="r-table" role="grid">
+      <colgroup><col style="width:24px"><col><col style="width:72px"></colgroup>
+      <thead><tr><th></th><th>Title</th><th class="r-num">Age</th></tr></thead>
+      <tbody id="items" data-feed-id="<%= @feed.id %>">
+        <%= render partial: "items/list_item", collection: @feed.items.order(published_at: :desc), as: :item %>
+      </tbody>
+    </table>
+  </div>
+
+  <%# RDR-01 FetchLog, collapsible under the item table. %>
+  <details class="rdr-log" open>
+    <summary class="r-panel-h">
+      04 LOG <span class="r-key">L</span>
+      <span class="r-label">Last <%= FetchEvent::RETENTION.inspect %></span>
+    </summary>
+    <div class="rdr-log-scroll">
+      <table class="r-table r-table-log">
+        <colgroup><col style="width:76px"><col style="width:88px"><col style="width:72px"><col style="width:72px"><col></colgroup>
+        <thead><tr><th>Time UTC</th><th>Result</th><th class="r-num">Size</th><th class="r-num">Took</th><th>Detail</th></tr></thead>
+        <tbody id="fetch_log">
+          <%= render partial: "fetch_events/fetch_event", collection: @feed.fetch_events.recent.limit(50) %>
+        </tbody>
+      </table>
+    </div>
+  </details>
 </turbo-frame>

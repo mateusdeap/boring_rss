@@ -10,17 +10,36 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_232406) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_120100) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
+    t.string "etag"
     t.string "feed_url"
+    t.integer "fetch_failures_count", default: 0, null: false
+    t.string "last_fetch_detail"
     t.datetime "last_fetch_error_at"
+    t.string "last_fetch_status"
+    t.datetime "last_fetched_at"
+    t.string "last_modified"
     t.string "link"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.index ["user_id"], name: "index_feeds_on_user_id"
+  end
+
+  create_table "fetch_events", force: :cascade do |t|
+    t.integer "bytes"
+    t.datetime "created_at", null: false
+    t.string "detail"
+    t.integer "duration_ms"
+    t.integer "feed_id", null: false
+    t.integer "new_items_count", default: 0, null: false
+    t.string "status", null: false
+    t.index ["created_at"], name: "index_fetch_events_on_created_at"
+    t.index ["feed_id", "created_at"], name: "index_fetch_events_on_feed_id_and_created_at"
+    t.index ["feed_id"], name: "index_fetch_events_on_feed_id"
   end
 
   create_table "items", force: :cascade do |t|
@@ -56,6 +75,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_232406) do
   end
 
   add_foreign_key "feeds", "users"
+  add_foreign_key "fetch_events", "feeds"
   add_foreign_key "items", "feeds"
   add_foreign_key "sessions", "users"
 end

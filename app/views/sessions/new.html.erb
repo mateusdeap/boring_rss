@@ -1,32 +1,24 @@
-<div class="mx-auto md:w-2/3 w-full">
-  <% if alert = flash[:alert] %>
-    <p class="py-2 px-3 border border-error mb-5 text-error font-medium rounded-lg inline-block" id="alert"><%= alert %></p>
-  <% end %>
+<div class="r-page">
+  <div class="r-panel">
+    <h1 class="r-panel-h">SIGN IN</h1>
+    <%= form_with url: session_url, class: "r-stack r-pad" do |form| %>
+      <%= render "layouts/flash" %>
 
-  <% if notice = flash[:notice] %>
-    <p class="py-2 px-3 mb-5 text-text font-medium rounded-lg inline-block" id="notice"><%= notice %></p>
-  <% end %>
-
-  <h1 class="font-bold text-4xl">Sign in</h1>
-
-  <%= form_with url: session_url, class: "contents" do |form| %>
-    <div class="my-5">
-      <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "Enter your email address", value: params[:email_address], class: "block shadow-sm rounded-md border border-divider focus:outline-accent px-3 py-2 mt-2 w-full" %>
-    </div>
-
-    <div class="my-5">
-      <%= form.password_field :password, required: true, autocomplete: "current-password", placeholder: "Enter your password", maxlength: 72, class: "block shadow-sm rounded-md border border-divider focus:outline-accent px-3 py-2 mt-2 w-full" %>
-    </div>
-
-    <div class="col-span-6 sm:flex sm:items-center sm:gap-4">
-      <div class="inline">
-        <%= form.submit "Sign in", class: "w-full sm:w-auto text-center rounded-md px-3.5 py-2.5 bg-accent hover:opacity-90 text-white inline-block font-medium cursor-pointer" %>
+      <div class="r-field">
+        <%= form.label :email_address, "Email", class: "r-label" %>
+        <%= form.email_field :email_address, required: true, autofocus: true, autocomplete: "username", placeholder: "you@example.com", value: params[:email_address], class: "r-input" %>
       </div>
 
-      <div class="mt-4 text-sm text-text-faint sm:mt-0 flex gap-4">
-        <%= link_to "Forgot password?", new_password_path, class: "text-text-dim underline hover:no-underline" %>
-        <%= link_to "Sign up", new_registration_path, class: "text-text-dim underline hover:no-underline" %>
+      <div class="r-field">
+        <%= form.label :password, class: "r-label" %>
+        <%= form.password_field :password, required: true, autocomplete: "current-password", maxlength: 72, class: "r-input" %>
       </div>
-    </div>
-  <% end %>
+
+      <div class="r-row">
+        <%= form.submit "Sign in", class: "r-btn r-btn-primary" %>
+        <%= link_to "Forgot password", new_password_path %>
+        <%= link_to "Sign up", new_registration_path %>
+      </div>
+    <% end %>
+  </div>
 </div>
