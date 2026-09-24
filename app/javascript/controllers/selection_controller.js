@@ -48,11 +48,13 @@ export default class extends Controller {
     document.removeEventListener("turbo:before-stream-render", this.wrapStreamRender)
   }
 
+  // The item list names the tree row it belongs to (a feed, or the
+  // Marked view) in #items[data-tree-row].
   feedNavigated(event) {
-    const feedId = event.target.querySelector("#items")?.dataset.feedId
-    if (!feedId) return
+    const treeRowId = event.target.querySelector("#items")?.dataset.treeRow
+    if (!treeRowId) return
 
-    this.selected.feedRowId = `feed_${feedId}`
+    this.selected.feedRowId = treeRowId
     this.selected.focusedPane = "tree"
     this.element.dataset.reading = "false"
     this.applySelection()

@@ -280,6 +280,15 @@ body[data-theme="dark"] {
   /* Links inside rows navigate; they take the row's type, not link colour. */
   .r-tree a, .r-table a { color: inherit; text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; }
   .r-tree li:hover:not([aria-selected="true"]) { background: var(--color-paper-3); }
+  /* Marked view row: first in the tree, set off by a strong rule; its
+     count is ink on mark (RDR-01: only ink sits on mark). */
+  .r-tree li.rdr-marked-row { border-bottom-color: var(--color-rule-strong); }
+  .rdr-count-mark { background: var(--color-mark); color: var(--color-ink); }
+
+  /* Item rows always carry a Feed cell (items/_list_item.html.erb); a
+     single feed's table hides it — display:none cells take no column. */
+  .rdr-single-feed .r-feed { display: none; }
+
   /* Folder rows toggle on click (selection_controller.js#toggleFolder). */
   .r-tree li.r-folder { cursor: pointer; user-select: none; }
 

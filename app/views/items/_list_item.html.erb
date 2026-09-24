@@ -11,5 +11,8 @@
       <span><%= item.title %></span><% if item.marked? %><span class="sr-only"> (marked)</span><% end %>
     <% end %>
   </td>
+  <%# Always rendered so a streamed replace fits either table; hidden by CSS
+      in a single feed's view (.rdr-single-feed), shown in the Marked view. %>
+  <td class="r-feed r-2"><%= item.feed.title %></td>
   <td class="r-num r-dim"><%= rdr_age_tag(item.published_at) if item.published_at %></td>
 </tr>

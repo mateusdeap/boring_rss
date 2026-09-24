@@ -14,6 +14,7 @@ class Items::MarksControllerTest < ActionDispatch::IntegrationTest
     assert_match %(target="#{ActionView::RecordIdentifier.dom_id(@item)}"), response.body
     assert_match %(target="#{ActionView::RecordIdentifier.dom_id(@item, :mark)}"), response.body
     assert_match "is-marked", response.body
+    assert_match %(target="marked_view"), response.body
   end
 
   test "destroy unmarks the item" do

@@ -24,10 +24,10 @@
     <span class="r-label ml-auto"><%= rdr_number(@unread_count) %> unread · <%= rdr_number(@feed.items.size) %> total</span>
   </div>
   <div class="rdr-pane-scroll">
-    <table class="r-table" role="grid">
+    <table class="r-table rdr-single-feed" role="grid">
       <colgroup><col style="width:24px"><col><col style="width:72px"></colgroup>
       <thead><tr><th></th><th>Title</th><th class="r-num">Age</th></tr></thead>
-      <tbody id="items" data-feed-id="<%= @feed.id %>">
+      <tbody id="items" data-tree-row="<%= dom_id @feed %>">
         <%= render partial: "items/list_item", collection: @items, as: :item %>
       </tbody>
     </table>

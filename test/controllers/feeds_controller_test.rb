@@ -124,4 +124,12 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "button[disabled]", text: /Mark all read — none unread/
   end
+
+  test "the tree starts with the Marked row and its count" do
+    items(:one).update!(marked: true)
+
+    get feeds_url
+
+    assert_select "#feeds > li:first-child#marked_view .rdr-count-mark", text: "1"
+  end
 end
