@@ -1,0 +1,8 @@
+<%# The whole feed tree, flat (RDR-01 FeedTree): each folder row followed
+    by its feeds, then the top-level feeds. Rendered on page load and by
+    FeedTreeStreams#tree_streams after any structural change. %>
+<% user.folders.alphabetical.includes(:feeds).each do |folder| %>
+  <%= render "folders/folder", folder: %>
+  <%= render partial: "feeds/feed", collection: folder.feeds.sort_by(&:id), as: :feed %>
+<% end %>
+<%= render partial: "feeds/feed", collection: user.feeds.where(folder_id: nil).order(:id), as: :feed %>

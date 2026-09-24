@@ -10,4 +10,5 @@ Rails.application.routes.draw do
   root "feeds#index"
 
   resources :feeds
+  resources :folders, only: %i[ update destroy ]
 end

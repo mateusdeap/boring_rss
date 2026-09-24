@@ -15,7 +15,9 @@ import { Controller } from "@hotwired/stimulus"
 // the full list is the KEYS dialog in feeds/index.html.erb):
 //   J / K     move the item cursor; Enter opens the item under it
 //   ↑ / ↓     move within the feed tree (roving tabindex, WAI-ARIA tree
-//             pattern); Enter or → opens the feed
+//             pattern); Enter or → opens a feed; on a folder, Enter
+//             toggles it, → expands, ← collapses (← on a feed inside a
+//             folder moves to the folder)
 //   A         add feed        L  toggle the fetch log
 //   O         open the current item's original page
 //   ?         show all keys   Esc  back to items (narrow layout)
@@ -93,8 +95,10 @@ export default class extends Controller {
     const row = event.target.closest("[role='treeitem']")
     if (!row) return
 
-    const rows = this.treeRows()
+    const rows = this.visibleTreeRows()
     const index = rows.indexOf(row)
+    const isFolder = "folderId" in row.dataset
+    const expanded = row.getAttribute("aria-expanded") === "true"
 
     switch (event.key) {
       case "ArrowDown": return this.handled(event, () => rows[index + 1]?.focus())
@@ -102,9 +106,47 @@ export default class extends Controller {
       case "Home": return this.handled(event, () => rows[0]?.focus())
       case "End": return this.handled(event, () => rows.at(-1)?.focus())
       case "Enter":
+        return this.handled(event, () => isFolder ? this.setFolderExpanded(row, !expanded) : row.querySelector("a")?.click())
       case "ArrowRight":
-        return this.handled(event, () => row.querySelector("a")?.click())
+        if (!isFolder) return this.handled(event, () => row.querySelector("a")?.click())
+        return this.handled(event, () => expanded ? rows[index + 1]?.focus() : this.setFolderExpanded(row, true))
+      case "ArrowLeft":
+        if (isFolder) return this.handled(event, () => this.setFolderExpanded(row, false))
+        return this.handled(event, () => this.folderRow(row.dataset.parentFolder)?.focus())
     }
+  }
+
+  // click on a folder row.
+  toggleFolder(event) {
+    const row = event.currentTarget
+    this.setFolderExpanded(row, row.getAttribute("aria-expanded") !== "true")
+    row.focus()
+  }
+
+  // Updates the DOM immediately, then saves the state in the background
+  // (FoldersController#update, JSON). Rows re-rendered later by a
+  // broadcast read the saved state, so they come back hidden/shown to match.
+  setFolderExpanded(row, expanded) {
+    row.setAttribute("aria-expanded", expanded)
+    row.querySelector("[data-disclosure]").textContent = expanded ? "▾" : "▸"
+    this.element.querySelectorAll(`#feeds [data-parent-folder="${row.dataset.folderId}"]`).forEach((child) => {
+      child.hidden = !expanded
+    })
+    if (!expanded && document.activeElement?.hidden) row.focus()
+
+    fetch(`/folders/${row.dataset.folderId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "X-CSRF-Token": document.querySelector("meta[name='csrf-token']")?.content
+      },
+      body: JSON.stringify({ folder: { collapsed: !expanded } })
+    })
+  }
+
+  folderRow(folderId) {
+    return folderId && this.element.querySelector(`#feeds [data-folder-id="${folderId}"]`)
   }
 
   moveItem(delta) {
@@ -156,14 +198,21 @@ export default class extends Controller {
 
   // Roving tabindex: exactly one tree row (the selected one, else the
   // first) is reachable with Tab; arrows move from there.
+  // (A selected feed inside a collapsed folder hands the tab stop to the
+  // first visible row.)
   updateTreeTabStop() {
     const rows = this.treeRows()
-    const stop = rows.find((row) => row.id === this.selected.feedRowId) || rows[0]
+    const visible = rows.filter((row) => !row.hidden)
+    const stop = visible.find((row) => row.id === this.selected.feedRowId) || visible[0]
     rows.forEach((row) => { row.tabIndex = row === stop ? 0 : -1 })
   }
 
   treeRows() {
     return [...this.element.querySelectorAll("#feeds [role='treeitem']")]
+  }
+
+  visibleTreeRows() {
+    return this.treeRows().filter((row) => !row.hidden)
   }
 
   // Typing in a field, a modifier chord, or an open dialog (which handles

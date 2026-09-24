@@ -1,10 +1,12 @@
 class Feed < ApplicationRecord
   belongs_to :user
+  belongs_to :folder, optional: true
   has_many :items, dependent: :destroy
   has_many :fetch_events, dependent: :delete_all
   accepts_nested_attributes_for :items
 
   validates_presence_of :link
+  validate :folder_belongs_to_owner
 
   def unread_count
     items.unread.count
@@ -12,6 +14,17 @@ class Feed < ApplicationRecord
 
   def fetch_failed?
     last_fetch_error_at?
+  end
+
+  def folder_name
+    folder&.name
+  end
+
+  # Files the feed by folder *name*: blank means the top level, an unknown
+  # name creates the folder (saved along with the feed). Always scoped to
+  # the feed's owner.
+  def folder_name=(name)
+    self.folder = name.to_s.squish.presence && user.folders.find_or_initialize_by(name:)
   end
 
   # Records one poll (UpdateFeedsJob): appends a FetchEvent for the log and
@@ -44,11 +57,21 @@ class Feed < ApplicationRecord
   # The feed tree row, on the owner's own stream — never a stream shared
   # across accounts, which would push one user's feed titles to everyone
   # subscribed.
+  # The folder row aggregates its feeds' unread counts and health, so it's
+  # re-rendered alongside.
   def broadcast_row
     broadcast_replace_to user, :feeds, target: self, partial: "feeds/feed", locals: { feed: self }
+    folder&.broadcast_row
   end
 
   def broadcast_row_later
     broadcast_replace_later_to user, :feeds, target: self, partial: "feeds/feed", locals: { feed: self }
+    folder&.broadcast_row_later
+  end
+
+  private
+
+  def folder_belongs_to_owner
+    errors.add(:folder, "must belong to the feed's owner") if folder && folder.user_id != user_id
   end
 end

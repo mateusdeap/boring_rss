@@ -280,6 +280,8 @@ body[data-theme="dark"] {
   /* Links inside rows navigate; they take the row's type, not link colour. */
   .r-tree a, .r-table a { color: inherit; text-decoration: none; display: block; overflow: hidden; text-overflow: ellipsis; }
   .r-tree li:hover:not([aria-selected="true"]) { background: var(--color-paper-3); }
+  /* Folder rows toggle on click (selection_controller.js#toggleFolder). */
+  .r-tree li.r-folder { cursor: pointer; user-select: none; }
 
   /*
    * Selection vs. focus (app/javascript/controllers/selection_controller.js):
