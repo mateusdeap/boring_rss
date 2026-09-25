@@ -9,6 +9,14 @@ class User < ApplicationRecord
   # folders as reading rivers; Feeds lists every feed for managing them.
   enum :tree_mode, { groups: "groups", feeds: "feeds" }, default: "groups", prefix: true, validate: true
 
+  # A river's sort (RDR-01 ItemTable): newest first across feeds, or
+  # grouped under a header row per feed. Per group, in item_sorts.
+  ITEM_SORTS = %w[time feed].freeze
+
+  def item_sort(group)
+    item_sorts[group.key].presence_in(ITEM_SORTS) || "time"
+  end
+
   enum :theme, { system: "system", light: "light", dark: "dark" }, default: "system"
 
   # Reader text settings (the reader's TEXT bar): one app-wide choice per

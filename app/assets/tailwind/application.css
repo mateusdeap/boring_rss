@@ -371,9 +371,10 @@ body[data-theme="dark"] {
   .rdr-marked-list { border-top: var(--hairline) solid var(--color-rule-strong); }
   .rdr-count-mark { background: var(--color-mark); color: var(--color-ink); }
 
-  /* Item rows always carry a Feed cell (items/_list_item.html.erb); a
-     single feed's table hides it — display:none cells take no column. */
-  .rdr-single-feed .r-feed { display: none; }
+  /* Item rows carry both source cells (items/_list_item.html.erb); the
+     table shows FEED across feeds and AUTHOR within one — display:none
+     cells take no column. */
+  .rdr-source-feed .r-author, .rdr-source-author .r-feed { display: none; }
 
   /* Folder rows toggle on click (selection_controller.js#toggleFolder). */
   .r-tree li.r-folder { cursor: pointer; user-select: none; }

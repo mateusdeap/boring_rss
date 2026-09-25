@@ -11,13 +11,8 @@
     <span class="r-label ml-auto">Unmarked items stay until reload — <span class="r-key">M</span> re-marks</span>
   </div>
   <div class="rdr-pane-scroll">
-    <table class="r-table" role="grid">
-      <colgroup><col style="width:24px"><col><col style="width:136px"><col style="width:72px"></colgroup>
-      <thead><tr><th></th><th>Title</th><th>Feed</th><th class="r-num">Age</th></tr></thead>
-      <tbody id="items" data-tree-row="marked_view">
-        <%= render partial: "items/list_item", collection: @items, as: :item %>
-      </tbody>
-    </table>
+    <%# No data-feed-ids: new items aren't marked, so none land here. %>
+    <%= render "items/table", items: @items, source: "feed", tree_row: "marked_view", sort: "time", feeds: [] %>
     <% if @items.none? %>
       <p class="r-empty">No marked items. Press <span class="r-key">M</span> on any item to mark it.</p>
     <% end %>

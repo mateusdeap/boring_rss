@@ -2,7 +2,9 @@
     Turbo Streams (Item#broadcast_creation, Item#mark_read!,
     Items::MarksController). The title text sits in its own <span> so a
     marked row highlights just the words (RDR-01's `mark` token), and
-    data-mark-url/data-marked let the M key toggle it without the reader. %>
+    data-mark-url/data-marked let the M key toggle it without the reader.
+    Both source cells are always rendered (items/_table.html.erb shows
+    one). %>
 <tr id="<%= dom_id item %>" class="<%= class_names(item.read? ? "is-read" : "is-unread", "is-marked": item.marked?) %>" aria-selected="false"
     data-mark-url="<%= item_mark_path(item) %>" data-marked="<%= item.marked? %>">
   <td><% unless item.read? %><span class="r-dot" aria-label="Unread"></span><% end %></td>
@@ -11,8 +13,8 @@
       <span><%= item.title %></span><% if item.marked? %><span class="sr-only"> (marked)</span><% end %>
     <% end %>
   </td>
-  <%# Always rendered so a streamed replace fits either table; hidden by CSS
-      in a single feed's view (.rdr-single-feed), shown in the Marked view. %>
   <td class="r-feed r-2"><%= item.feed.title %></td>
+  <td class="r-author r-2"><%= item.author.presence || "—" %></td>
+  <td class="r-num r-dim"><%= rdr_number(item.word_count) %></td>
   <td class="r-num r-dim"><%= rdr_age_tag(item.published_at) if item.published_at %></td>
 </tr>

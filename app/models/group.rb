@@ -79,6 +79,15 @@ class Group
     Feed.health_summary(feeds_in_tree_order)
   end
 
+  # [⇧R] for the whole river: one UPDATE, then each touched feed's rows
+  # (tree, groups, feed head) re-broadcast. Returns how many changed.
+  def mark_all_read!
+    feed_ids = items.unread.distinct.pluck(:feed_id)
+    count = items.unread.update_all(read: true, updated_at: Time.current)
+    user.feeds.where(id: feed_ids).each(&:broadcast_row_later)
+    count
+  end
+
   def ==(other)
     other.is_a?(Group) && other.user == user && other.key == key
   end

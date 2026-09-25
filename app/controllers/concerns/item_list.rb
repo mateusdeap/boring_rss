@@ -13,9 +13,13 @@ module ItemList
     @items = @items.unread if Current.user.unread_only?
   end
 
-  # A group's merged river (Groups mode): every item of its feeds.
+  # A group's merged river (Groups mode): every item of its feeds, newest
+  # first — under one header row per feed, in tree order, when the group
+  # is sorted by FEED.
   def load_group_list(group)
     @group = group
+    @sort = Current.user.item_sort(group)
+    @feeds = group.feeds_in_tree_order
     @unread_count = group.unread_count
     @items = group.items.includes(:feed).order(published_at: :desc)
     @items = @items.unread if Current.user.unread_only?

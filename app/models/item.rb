@@ -51,8 +51,14 @@ class Item < ApplicationRecord
     feed.broadcast_row_later
   end
 
+  # A new item lands in every list on the owner's screen that includes its
+  # feed: on top of a newest-first list (a feed, or a river sorted by TIME,
+  # whose #items names its feeds in data-feed-ids), or under its feed's
+  # header in a river sorted by FEED.
   def broadcast_creation
-    broadcast_prepend_to feed, target: "items", partial: "items/list_item", locals: { item: self }
+    broadcast_prepend_to feed.user, :feeds, targets: "#items[data-sort='time'][data-feed-ids~='#{feed_id}']",
+                         partial: "items/list_item", locals: { item: self }
+    broadcast_after_to feed.user, :feeds, target: "feedhead_#{feed_id}", partial: "items/list_item", locals: { item: self }
     feed.broadcast_row
   end
 end

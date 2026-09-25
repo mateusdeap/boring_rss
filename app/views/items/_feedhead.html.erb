@@ -1,0 +1,13 @@
+<%# RDR-01 ItemTable feed header row, in a river sorted by FEED: name,
+    unread count, typical volume (or, when stale, the newest item's age)
+    and health, so a quiet feed isn't buried under a busy one. Not
+    selectable — J/K skip it. New items are inserted right after it
+    (Item#broadcast_creation), and Feed#broadcast_row keeps it current. %>
+<% unread = feed.unread_count %>
+<tr id="feedhead_<%= feed.id %>" class="r-feedhead">
+  <td colspan="5">
+    <span class="r-feedhead-name"><%= feed.title %></span>
+    <span class="r-dim">· <%= rdr_number(unread) %> unread · <%= feed.stale? && !feed.fetch_failed? ? "last item #{rdr_age(feed.last_item_at)}" : items_per_week_label(feed) %> ·</span>
+    <%= feed_health_tag(feed) %>
+  </td>
+</tr>

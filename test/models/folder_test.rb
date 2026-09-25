@@ -53,7 +53,7 @@ class FolderTest < ActiveSupport::TestCase
 
     streams = capture_turbo_stream_broadcasts([ feed.user, :feeds ]) { feed.broadcast_row }
 
-    assert_equal [ "feed_#{feed.id}", "folder_#{folders(:tech).id}", "group_all", "group_#{folders(:tech).id}" ],
+    assert_equal [ "feed_#{feed.id}", "feedhead_#{feed.id}", "folder_#{folders(:tech).id}", "group_all", "group_#{folders(:tech).id}" ],
                  streams.map { |stream| stream["target"] }
   end
 end

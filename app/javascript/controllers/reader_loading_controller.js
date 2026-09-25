@@ -25,7 +25,7 @@ export default class extends Controller {
 
   show(url) {
     const itemId = url.pathname.match(/\/items\/(\d+)/)?.[1]
-    const rows = [...document.querySelectorAll("#items > tr")]
+    const rows = [...document.querySelectorAll("#items > tr:not(.r-feedhead)")]
     const row = rows.find((tr) => tr.id === `item_${itemId}`)
     const position = row ? `${rows.indexOf(row) + 1} / ${rows.length}` : ""
     const feed = row?.querySelector(".r-feed")?.textContent.trim()

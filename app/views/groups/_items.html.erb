@@ -1,29 +1,48 @@
 <%# 02 ITEMS for a group (RDR-01 ItemTable, merged river): every item of
-    the group's feeds, newest first, with a FEED column since the list
-    spans several feeds. Row updates arrive on the user's own stream,
-    which the app shell subscribes to. %>
+    the group's feeds with a FEED column, since the list spans several
+    feeds. [S] switches the sort between TIME (newest first) and FEED
+    (grouped under feed header rows), remembered per group. Row updates
+    and new items arrive on the user's own stream, which the app shell
+    subscribes to. %>
 <turbo-frame id="current_feed" data-action="turbo:frame-render->selection#feedNavigated">
   <div class="r-panel-h">
     <%= link_to "← GROUPS", root_path, class: "rdr-phone-back", data: { turbo_frame: "_top", reader_back: "items" } %>
     <span class="truncate">02 ITEMS — <%= @group.name %></span>
-    <span class="r-label"><%= pluralize(rdr_number(@group.feeds.size), "feed") %> · <%= rdr_number(@unread_count) %> unread</span>
+    <span class="r-label"><%= rdr_number(@feeds.size) %> feeds · <%= rdr_number(@unread_count) %> unread · sort <%= @sort == "time" ? "time ↓" : "feed" %></span>
   </div>
+  <%# Sort, filter and bulk actions submit inside this frame and redirect
+      back to the group. data-shortcut: selection_controller.js clicks
+      these for S (the sort not in use), ⇧U and ⇧R. %>
   <div class="rdr-toolbar">
+    <span class="r-label">Sort</span>
+    <div class="r-seg" role="group" aria-label="Sort">
+      <% { "time" => "Time", "feed" => "Feed" }.each do |sort, label| %>
+        <% current = sort == @sort %>
+        <%= button_to group_sort_path(@group), method: :patch, params: { sort: }, form: { class: "contents" },
+              class: "r-btn", aria: { pressed: current }, data: ({ shortcut: "s" } unless current) do %>
+          <% if sort == "time" %><span class="r-key">S</span><% end %> <%= label %><%= " ↓" if current %>
+        <% end %>
+      <% end %>
+    </div>
     <%= button_to preferences_path, method: :patch, form: { class: "contents" },
           params: { user: { unread_only: !Current.user.unread_only? }, return_to: group_path(@group) },
           class: "r-btn", aria: { pressed: Current.user.unread_only? }, data: { shortcut: "shift+u" } do %>
       <span class="r-key">⇧U</span> Unread only
     <% end %>
+    <% if @unread_count.positive? %>
+      <%= button_to group_reading_path(@group), form: { class: "contents", data: { turbo_confirm: "Mark #{pluralize(@unread_count, "unread item")} in #{@group.name} read?" } },
+            class: "r-btn", data: { shortcut: "shift+r" } do %>
+        <span class="r-key">⇧R</span> Mark all read
+      <% end %>
+    <% else %>
+      <button type="button" class="r-btn" disabled><span class="r-key">⇧R</span> Mark all read — none unread</button>
+    <% end %>
   </div>
   <div class="rdr-pane-scroll">
-    <table class="r-table" role="grid">
-      <colgroup><col style="width:24px"><col><col style="width:128px"><col style="width:72px"></colgroup>
-      <thead><tr><th></th><th>Title</th><th>Feed</th><th class="r-num">Age</th></tr></thead>
-      <tbody id="items" data-tree-row="<%= @group.dom_id %>">
-        <%= render partial: "items/list_item", collection: @items, as: :item %>
-      </tbody>
-    </table>
-    <% if @items.none? %>
+    <%= render "items/table", items: @items, source: "feed", tree_row: @group.dom_id, sort: @sort, feeds: @feeds %>
+    <% if @feeds.empty? %>
+      <p class="r-empty">No feeds in <%= @group.name %>. <span class="r-key">A</span> adds one.</p>
+    <% elsif @items.none? && @sort == "time" %>
       <p class="r-empty">
         <% if Current.user.unread_only? && @group.items.exists? %>
           No unread items. <span class="r-key">⇧U</span> shows the read ones.

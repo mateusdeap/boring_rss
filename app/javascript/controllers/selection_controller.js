@@ -28,7 +28,8 @@ import { savePreferences } from "lib/preferences"
 //             folder moves to the folder)
 //   G / F     left pane: Groups or Feeds mode (saved per user)
 //   M         mark / unmark the open item
-//   ⇧U        unread-only filter    ⇧R  mark all read (current feed)
+//   S         sort a river: TIME / FEED (feed header rows are skipped)
+//   ⇧U        unread-only filter    ⇧R  mark all read (current list)
 //   A         add feed        L  toggle the fetch log
 //   ?         show all keys
 export default class extends Controller {
@@ -150,6 +151,7 @@ export default class extends Controller {
       case "m": return this.handled(event, () => this.toggleMark())
       case "g": return this.handled(event, () => this.setMode("groups"))
       case "f": return this.handled(event, () => this.setMode("feeds"))
+      case "s":
       case "shift+u":
       case "shift+r":
         return this.clickShortcut(event, this.combo(event))
@@ -223,7 +225,7 @@ export default class extends Controller {
   // open, J starts at the first unread row — or, with no list loaded, the
   // reader's [J] OPEN FIRST UNREAD (newest unread across all feeds).
   openAdjacent(delta) {
-    const rows = [...this.element.querySelectorAll("#items > tr")]
+    const rows = [...this.element.querySelectorAll("#items > tr:not(.r-feedhead)")]
     const current = rows.findIndex((row) => row.id === this.selected.itemRowId)
     let next
 
@@ -311,7 +313,7 @@ export default class extends Controller {
     const reader = this.element.querySelector(".rdr-reader[data-item-id]")
     if (!reader) return
 
-    const rows = [...this.element.querySelectorAll("#items > tr")]
+    const rows = [...this.element.querySelectorAll("#items > tr:not(.r-feedhead)")]
     const row = document.getElementById(`item_${reader.dataset.itemId}`)
     const index = rows.indexOf(row)
     if (index !== -1) {

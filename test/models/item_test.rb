@@ -79,4 +79,13 @@ class ItemTest < ActiveSupport::TestCase
       items(:one).mark_unread!
     end
   end
+
+  test "a new item is prepended to newest-first lists that include its feed, and lands under its feed's header" do
+    feed = feeds(:one)
+    streams = capture_turbo_stream_broadcasts([ feed.user, :feeds ]) { feed.items.create!(title: "Fresh") }
+
+    prepend = streams.find { |stream| stream["action"] == "prepend" }
+    assert_equal "#items[data-sort='time'][data-feed-ids~='#{feed.id}']", prepend["targets"]
+    assert_equal "feedhead_#{feed.id}", streams.find { |stream| stream["action"] == "after" }["target"]
+  end
 end

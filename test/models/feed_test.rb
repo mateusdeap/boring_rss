@@ -16,8 +16,9 @@ class FeedTest < ActiveSupport::TestCase
     feed = feeds(:one)
 
     assert_difference -> { feed.fetch_events.count } do
-      # The feed row, plus the Groups rows showing it: All feeds, Ungrouped.
-      assert_turbo_stream_broadcasts [ feed.user, :feeds ], count: 3 do
+      # The feed row, its feed header in a river, and the Groups rows
+      # showing it: All feeds, Ungrouped.
+      assert_turbo_stream_broadcasts [ feed.user, :feeds ], count: 4 do
         feed.record_fetch!(status: "503", detail: "Service Unavailable", bytes: 120)
       end
     end

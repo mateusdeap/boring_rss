@@ -122,14 +122,18 @@ class Feed < ApplicationRecord
   # re-rendered alongside.
   # Groups mode's rows (All feeds, and the feed's folder or Ungrouped)
   # aggregate the same counts and health, so they follow too.
+  # A river sorted by FEED heads this feed's items with a row of its own
+  # (items/_feedhead), which follows along.
   def broadcast_row
     broadcast_replace_to user, :feeds, target: self, partial: "feeds/feed", locals: { feed: self }
+    broadcast_replace_to user, :feeds, target: "feedhead_#{id}", partial: "items/feedhead", locals: { feed: self }
     folder&.broadcast_row
     Group.containing(self).each(&:broadcast_row)
   end
 
   def broadcast_row_later
     broadcast_replace_later_to user, :feeds, target: self, partial: "feeds/feed", locals: { feed: self }
+    broadcast_replace_later_to user, :feeds, target: "feedhead_#{id}", partial: "items/feedhead", locals: { feed: self }
     folder&.broadcast_row_later
     Group.containing(self).each(&:broadcast_row_later)
   end

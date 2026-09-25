@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_183415) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_184118) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
@@ -90,6 +90,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_183415) do
   create_table "users", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "email_address", null: false
+    t.json "item_sorts", default: {}, null: false
     t.string "password_digest", null: false
     t.boolean "reader_details_expanded", default: true, null: false
     t.integer "reader_measure", default: 68, null: false

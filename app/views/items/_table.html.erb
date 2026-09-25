@@ -1,0 +1,28 @@
+<%# RDR-01 ItemTable: title · source · words · age, one 24px row per item.
+    The source column is FEED when the list spans several feeds and
+    AUTHOR in a single feed's list; every row renders both cells so one
+    streamed row fits any table, and the table's class hides the other.
+
+    #items says what a live update may change in it: data-sort and
+    data-feed-ids pick which lists a new item is prepended to
+    (Item#broadcast_creation); data-tree-row names the left pane row it
+    belongs to (selection_controller.js#feedNavigated).
+
+    locals: items (ordered), source ("feed" / "author"), tree_row,
+    sort ("time" / "feed"), feeds (the feeds to head, in order, for
+    sort "feed"; their ids go in data-feed-ids either way) %>
+<table class="r-table rdr-source-<%= source %>" role="grid">
+  <colgroup><col style="width:24px"><col><col style="width:128px"><col style="width:64px"><col style="width:64px"></colgroup>
+  <thead><tr><th></th><th>Title</th><th><%= source == "feed" ? "Feed" : "Author" %></th><th class="r-num">Words</th><th class="r-num">Age</th></tr></thead>
+  <tbody id="items" data-tree-row="<%= tree_row %>" data-sort="<%= sort %>" data-feed-ids="<%= feeds.map(&:id).join(" ") %>">
+    <% if sort == "feed" %>
+      <% by_feed = items.group_by(&:feed_id) %>
+      <% feeds.each do |feed| %>
+        <%= render "items/feedhead", feed: %>
+        <%= render partial: "items/list_item", collection: by_feed.fetch(feed.id, []), as: :item %>
+      <% end %>
+    <% else %>
+      <%= render partial: "items/list_item", collection: items, as: :item %>
+    <% end %>
+  </tbody>
+</table>
