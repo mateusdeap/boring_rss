@@ -43,24 +43,32 @@ class FeedsController < ApplicationController
     end
   end
 
-  # Moves a feed between folders (the feed tree's "Move to folder" dialog).
+  # Renames a feed or moves it to another group: the feed view's RENAME…
+  # and MOVE TO GROUP… dialogs, and the left pane's context menu. From the
+  # feed view (from=feed_view) the answer also re-renders that view, whose
+  # header names both.
   def update
     feed = Current.user.feeds.find(params[:id])
-    feed.folder_name = params.expect(feed: [ :folder_name ])[:folder_name]
+    attributes = params.expect(feed: [ :title, :folder_name ])
+    feed.title = attributes[:title].to_s.squish if attributes.key?(:title)
+    feed.folder_name = attributes[:folder_name] if attributes.key?(:folder_name)
 
     if feed.save
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: tree_streams }
-        format.html { redirect_to :feeds }
+        format.turbo_stream { render turbo_stream: tree_streams + feed_view_streams(feed) }
+        format.html { redirect_to feed }
       end
     else
-      render_dialog_error "move-feed-error", feed
+      render_dialog_error dialog_error_target(attributes), feed
     end
   end
 
+  # UNSUBSCRIBE… in the feed view leaves for the start page, since the
+  # view's own URL is gone; the context menu's delete stays put.
   def destroy
     feed = Current.user.feeds.find(params[:id])
     feed.destroy
+    return redirect_to(root_path, status: :see_other) if from_feed_view?
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: tree_streams }
@@ -69,6 +77,23 @@ class FeedsController < ApplicationController
   end
 
   private
+
+  def from_feed_view?
+    params[:from] == "feed_view"
+  end
+
+  def feed_view_streams(feed)
+    return [] unless from_feed_view?
+
+    load_item_list(feed)
+    [ turbo_stream.update("current_feed", partial: "feeds/view") ]
+  end
+
+  def dialog_error_target(attributes)
+    return "move-feed-error" unless from_feed_view?
+
+    attributes.key?(:title) ? "feed-view-rename-error" : "feed-view-move-error"
+  end
 
   def feed_params
     params.expect(feed: [ :link, :folder_name ])

@@ -1,9 +1,9 @@
 # One poll of one feed by UpdateFeedsJob — the rows behind RDR-01's
 # FetchLog. `status` is the HTTP status as a string ("200", "304", "503")
 # or, when there was no usable HTTP response, a state word (see
-# UpdateFeedsJob::FAILURE_WORDS). Pruned after RETENTION by the job.
+# UpdateFeedsJob::FAILURE_WORDS). The job keeps the newest KEEP per feed.
 class FetchEvent < ApplicationRecord
-  RETENTION = 1.day
+  KEEP = 50
 
   belongs_to :feed
 
@@ -27,8 +27,12 @@ class FetchEvent < ApplicationRecord
     tone(status) == "fail"
   end
 
-  def self.prune(before: RETENTION.ago)
-    where(created_at: ...before).delete_all
+  # Everything but each feed's newest KEEP events. By count, not age: a
+  # feed polled every 30 minutes (or retried every 6 hours) still shows
+  # days of history.
+  def self.prune(keep: KEEP)
+    ranked = select(:id, "ROW_NUMBER() OVER (PARTITION BY feed_id ORDER BY created_at DESC, id DESC) AS position")
+    where(id: from(ranked, :fetch_events).where("position > ?", keep).select(:id)).delete_all
   end
 
   def tone

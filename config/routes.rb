@@ -21,6 +21,8 @@ Rails.application.routes.draw do
   resources :feeds do
     # POST /feeds/:feed_id/reading — mark every item in the feed read.
     resource :reading, only: :create, module: :feeds
+    # FETCH NOW in the feed view.
+    resource :fetch, only: :create, module: :feeds
   end
   resources :folders, only: %i[ update destroy ]
   # Groups mode's rivers: /groups/all, /groups/ungrouped, /groups/:folder_id.

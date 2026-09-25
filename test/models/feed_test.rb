@@ -91,4 +91,37 @@ class FeedTest < ActiveSupport::TestCase
     assert_in_delta 2.0, feed.items_per_week
     assert_in_delta Time.current, feed.last_item_at, 1.minute
   end
+
+  test "failures back off: 30 min, 1 h, 2 h, 4 h, then every 6 h, counting attempts to 8; a success resets" do
+    feed = feeds(:one)
+
+    freeze_time do
+      started = Time.current
+      delays = 9.times.map do
+        feed.record_fetch!(status: "503", detail: "Service Unavailable")
+        (feed.next_fetch_at - Time.current).to_i / 60
+      end
+
+      assert_equal [ 30, 60, 120, 240, 360, 360, 360, 360, 360 ], delays
+      assert_equal started, feed.failing_since
+      assert_match "(attempt 8/8)", feed.fetch_events.recent.second.detail
+      assert_match "(every 6 h)", feed.fetch_events.recent.first.detail
+
+      feed.record_fetch!(status: "200", detail: "RSS", bytes: 10)
+      assert_nil feed.failing_since
+      assert_equal 0, feed.fetch_failures_count
+      assert_equal Time.current + 30.minutes, feed.next_fetch_at
+      assert_equal [ Time.current, "200", 10 ], [ feed.last_ok_at, feed.last_ok_status, feed.last_ok_bytes ]
+    end
+  end
+
+  test "a failure keeps the last OK fetch and the hub" do
+    feed = feeds(:one)
+    feed.update!(last_ok_at: 1.day.ago, last_ok_status: "200", websub_hub: "https://hub.example.com/")
+
+    feed.record_fetch!(status: "TIMEOUT", detail: "Net::OpenTimeout")
+
+    assert_equal "200", feed.last_ok_status
+    assert_equal "https://hub.example.com/", feed.websub_hub
+  end
 end

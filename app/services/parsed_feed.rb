@@ -9,7 +9,7 @@ class ParsedFeed
   # nil rather than raising — Feed's own `validates_presence_of :link`
   # remains the actual backstop against an unusably broken feed.
   def self.parse(source)
-    new(RSS::Parser.parse(source, false))
+    new(RSS::Parser.parse(source, false), source: source.to_s.include?("<") ? source.to_s : nil)
   end
 
   # Parses an already-fetched response body (FeedFetcher). RSS::Parser's
@@ -22,8 +22,21 @@ class ParsedFeed
     parse(body)
   end
 
-  def initialize(document)
+  # A <link rel="hub"> (Atom, or atom:link inside RSS) names the feed's
+  # WebSub hub. Read from the markup, since the rss gem doesn't parse
+  # atom:link inside an RSS channel.
+  HUB_LINK = /<(?:atom:)?link\b[^>]*\brel\s*=\s*["']hub["'][^>]*>/i
+  HREF = /\bhref\s*=\s*["']([^"']+)["']/i
+
+  def initialize(document, source: nil)
     @document = document
+    @source = source
+  end
+
+  # The hub's URL, or nil when the feed names none (or wasn't parsed from
+  # markup).
+  def websub_hub
+    @source&.[](HUB_LINK)&.[](HREF, 1)
   end
 
   def title

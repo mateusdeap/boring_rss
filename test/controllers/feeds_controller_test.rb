@@ -196,4 +196,76 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "#current_item form[action='#{poll_path}'] button[data-reader-key=r]", text: /Poll now/
   end
+
+  test "the feed view shows its facts, its actions, its items and its fetch log" do
+    feed = feeds(:one)
+    feed.update!(folder: folders(:tech), etag: %("7be2a1"), last_modified: "Mon, 21 Sep 2026 05:40:00 GMT")
+    feed.refresh_volume!
+    travel_to Time.utc(2026, 9, 21, 5, 40) do
+      feed.record_fetch!(status: "200", detail: "RSS", bytes: 41_200)
+    end
+    travel_to Time.utc(2026, 9, 24, 6, 28) do
+      3.times { feed.record_fetch!(status: "503", detail: "Service Unavailable") }
+    end
+
+    get feed_url(feed)
+
+    assert_select ".r-panel-h", text: /02 FEED — #{feed.title}/
+    assert_select ".r-panel-h .r-label", text: /Tech · \d+ unread · \d+ items?/
+    assert_select ".rdr-feed-facts dd", text: %r{feed-one.example.com/rss ↗}
+    assert_select ".rdr-feed-facts dd", text: /503 Service Unavailable · failing since 2026-09-24 06:28Z · retry 08:28Z \(attempt 3\/8\)/
+    assert_select ".rdr-feed-facts dd", text: /2026-09-21 05:40Z · 200 · 41.2 kB · ETag "7be2…"/
+    assert_select ".rdr-feed-facts dd", text: /poll every 30 min · no WebSub hub · sends ETag and Last-Modified/
+    assert_select ".rdr-feed-facts dd", text: /items? \/ wk · last item .* · \d+ items? kept/
+
+    assert_select "form[action='#{feed_fetch_path(feed)}'] button", text: "Fetch now"
+    assert_select "button[commandfor=feed-view-rename-dialog]", text: "Rename…"
+    assert_select "button[commandfor=feed-view-move-dialog]", text: "Move to group…"
+    assert_select "form[action='#{feed_path(feed)}'][data-turbo-confirm] button", text: "Unsubscribe…"
+    assert_select ".rdr-toolbar .r-btn:not([data-shortcut]) .r-key", count: 0
+
+    assert_select "table.rdr-source-author #items"
+    assert_select ".rdr-log summary", text: /04 LOG — #{feed.title}\s+last 4 fetches/
+    assert_select "#fetch_log tr", count: 4
+  end
+
+  test "FETCH NOW polls just that feed" do
+    assert_enqueued_with(job: UpdateFeedsJob, args: [ { feed_id: feeds(:one).id } ]) do
+      post feed_fetch_url(feeds(:one))
+    end
+    assert_redirected_to feed_path(feeds(:one))
+  end
+
+  test "renaming from the feed view re-renders the tree and the view" do
+    patch feed_url(feeds(:one)), params: { from: "feed_view", feed: { title: "  Solder   Notes " } }, as: :turbo_stream
+
+    assert_equal "Solder Notes", feeds(:one).reload.title
+    assert_match %(<turbo-stream action="update" target="groups">), response.body
+    assert_match %(<turbo-stream action="update" target="current_feed">), response.body
+    assert_match "02 FEED — Solder Notes", response.body
+  end
+
+  test "a blank name is refused inside the dialog" do
+    patch feed_url(feeds(:one)), params: { from: "feed_view", feed: { title: " " } }, as: :turbo_stream
+
+    assert_response :unprocessable_content
+    assert_match %(target="feed-view-rename-error"), response.body
+  end
+
+  test "moving from the feed view files it in the group; from the context menu it only re-renders the tree" do
+    patch feed_url(feeds(:one)), params: { from: "feed_view", feed: { folder_name: "Hardware" } }, as: :turbo_stream
+    assert_equal "Hardware", feeds(:one).reload.folder_name
+    assert_match %(target="current_feed"), response.body
+
+    patch feed_url(feeds(:one)), params: { feed: { folder_name: "" } }, as: :turbo_stream
+    assert_nil feeds(:one).reload.folder
+    assert_no_match %(target="current_feed"), response.body
+  end
+
+  test "unsubscribing from the feed view goes back to the start" do
+    assert_difference -> { Feed.count }, -1 do
+      delete feed_url(feeds(:one)), params: { from: "feed_view" }, as: :turbo_stream
+    end
+    assert_redirected_to root_path
+  end
 end

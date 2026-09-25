@@ -1,0 +1,113 @@
+<%# The feed view, top to bottom: header, actions, facts (URL, status,
+    last OK fetch, schedule, volume), the feed's items (AUTHOR column),
+    its FetchLog. The management actions have no shortcuts; UNSUBSCRIBE
+    asks first. The rename and move dialogs live in here and post back
+    with from=feed_view, so the answer can re-render this view.
+    Needs @feed, @items, @unread_count (ItemList#load_item_list). %>
+<%= turbo_stream_from @feed %>
+<div class="r-panel-h">
+  <%= link_to "← FEEDS", root_path, class: "rdr-phone-back", data: { turbo_frame: "_top", reader_back: "items" } %>
+  <span class="truncate">02 FEED — <%= @feed.title %></span>
+  <span class="r-label"><%= @feed.folder&.name || "Ungrouped" %> · <%= rdr_number(@unread_count) %> unread · <%= pluralize(rdr_number(@feed.items.size), "item") %></span>
+</div>
+
+<div class="rdr-toolbar">
+  <%= button_to "Fetch now", feed_fetch_path(@feed), form: { class: "contents" }, class: "r-btn" %>
+  <button type="button" class="r-btn" command="show-modal" commandfor="feed-view-rename-dialog">Rename…</button>
+  <button type="button" class="r-btn" command="show-modal" commandfor="feed-view-move-dialog">Move to group…</button>
+  <%= button_to "Unsubscribe…", feed_path(@feed), method: :delete, params: { from: "feed_view" }, class: "r-btn",
+        form: { class: "contents", data: { turbo_frame: "_top", turbo_confirm: "Unsubscribe from #{@feed.title}? Its #{pluralize(@feed.items.size, "item")} and fetch log are deleted." } } %>
+  <span class="rdr-grow"></span>
+  <%# data-shortcut: selection_controller.js clicks these for ⇧U and ⇧R. %>
+  <%= button_to preferences_path, method: :patch, form: { class: "contents" },
+        params: { user: { unread_only: !Current.user.unread_only? }, return_to: feed_path(@feed) },
+        class: "r-btn", aria: { pressed: Current.user.unread_only? }, data: { shortcut: "shift+u" } do %>
+    <span class="r-key">⇧U</span> Unread only
+  <% end %>
+  <% if @unread_count.positive? %>
+    <%= button_to feed_reading_path(@feed), form: { class: "contents", data: { turbo_confirm: "Mark #{pluralize(@unread_count, "unread item")} in #{@feed.title} read?" } },
+          class: "r-btn", data: { shortcut: "shift+r" } do %>
+      <span class="r-key">⇧R</span> Mark all read
+    <% end %>
+  <% else %>
+    <button type="button" class="r-btn" disabled><span class="r-key">⇧R</span> Mark all read — none unread</button>
+  <% end %>
+</div>
+
+<dl class="r-meta rdr-feed-facts">
+  <dt>URL</dt>
+  <dd><%= link_to "#{bare_url(@feed.feed_url)} ↗", @feed.feed_url, target: "_blank", rel: "noopener", title: @feed.feed_url %></dd>
+  <dt>Status</dt>
+  <dd><%= feed_status_fact(@feed) %></dd>
+  <dt>Last OK</dt>
+  <dd><%= feed_last_ok_fact(@feed) %></dd>
+  <dt>Schedule</dt>
+  <dd><%= feed_schedule_fact(@feed) %></dd>
+  <dt>Volume</dt>
+  <dd><%= feed_volume_fact(@feed) %></dd>
+</dl>
+
+<div class="rdr-pane-scroll">
+  <%= render "items/table", items: @items, source: "author", tree_row: dom_id(@feed), sort: "time", feeds: [ @feed ] %>
+  <% if @items.none? %>
+    <p class="r-empty">
+      <% if Current.user.unread_only? && @feed.items.any? %>
+        No unread items. <%= rdr_number(@feed.items.size) %> read hidden — <span class="r-key">⇧U</span> shows them.
+      <% else %>
+        No items.
+      <% end %>
+    </p>
+  <% end %>
+</div>
+
+<%# RDR-01 FetchLog, collapsible under the item table. %>
+<% events = @feed.fetch_events.recent.limit(FetchEvent::KEEP) %>
+<details class="rdr-log" open>
+  <summary class="r-panel-h">
+    04 LOG — <%= @feed.title %>
+    <span class="r-label">last <%= pluralize(events.size, "fetch", plural: "fetches") %> · <span class="r-key">L</span> <span class="rdr-log-hide">Hide</span><span class="rdr-log-show">Show</span></span>
+  </summary>
+  <div class="rdr-log-scroll">
+    <table class="r-table r-table-log">
+      <colgroup><col style="width:120px"><col style="width:88px"><col style="width:72px"><col style="width:72px"><col></colgroup>
+      <thead><tr><th>Time UTC</th><th>Result</th><th class="r-num">Size</th><th class="r-num">Took</th><th>Detail</th></tr></thead>
+      <tbody id="fetch_log">
+        <%= render partial: "fetch_events/fetch_event", collection: events %>
+      </tbody>
+    </table>
+  </div>
+</details>
+
+<dialog id="feed-view-rename-dialog" class="r-dialog" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
+  <div class="r-panel-h">RENAME FEED</div>
+  <%= form_with model: @feed, url: feed_path(@feed), method: :patch, class: "r-stack r-pad" do |f| %>
+    <%= hidden_field_tag :from, "feed_view", id: nil %>
+    <div class="r-field">
+      <%= f.label :title, "Name", class: "r-label", for: "feed_view_title" %>
+      <%= f.text_field :title, id: "feed_view_title", required: true, maxlength: 200, autocomplete: "off", class: "r-input" %>
+      <span class="r-help">Shown in the left pane and item lists. Fetching doesn't change it back.</span>
+      <span class="r-help text-fail" id="feed-view-rename-error" role="alert"></span>
+    </div>
+    <div class="r-dialog-actions">
+      <button type="button" class="r-btn" commandfor="feed-view-rename-dialog" command="close"><span class="r-key">ESC</span> Cancel</button>
+      <%= f.submit "Rename", class: "r-btn r-btn-primary" %>
+    </div>
+  <% end %>
+</dialog>
+
+<dialog id="feed-view-move-dialog" class="r-dialog" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
+  <div class="r-panel-h">MOVE TO GROUP</div>
+  <%= form_with model: @feed, url: feed_path(@feed), method: :patch, class: "r-stack r-pad" do |f| %>
+    <%= hidden_field_tag :from, "feed_view", id: nil %>
+    <div class="r-field">
+      <%= f.label :folder_name, "Group", class: "r-label", for: "feed_view_folder_name" %>
+      <%= f.text_field :folder_name, id: "feed_view_folder_name", list: "folder-names", autocomplete: "off", placeholder: "Blank = Ungrouped", class: "r-input" %>
+      <span class="r-help">An existing group, or a new name to create one. Blank moves it to Ungrouped.</span>
+      <span class="r-help text-fail" id="feed-view-move-error" role="alert"></span>
+    </div>
+    <div class="r-dialog-actions">
+      <button type="button" class="r-btn" commandfor="feed-view-move-dialog" command="close"><span class="r-key">ESC</span> Cancel</button>
+      <%= f.submit "Move", class: "r-btn r-btn-primary" %>
+    </div>
+  <% end %>
+</dialog>

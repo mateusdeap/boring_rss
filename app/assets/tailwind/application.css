@@ -407,6 +407,11 @@ body[data-theme="dark"] {
   .rdr-log[open] > summary::before { content: "▾"; }
   .rdr-log > summary .r-label { overflow: hidden; text-overflow: ellipsis; margin-left: auto; }
   .rdr-log-scroll { max-height: 30vh; overflow: auto; }
+  .rdr-log:not([open]) .rdr-log-hide, .rdr-log[open] .rdr-log-show { display: none; }
+
+  /* Feed view facts (feeds/_view): RDR-01 .r-meta under the actions. */
+  .rdr-feed-facts { flex-shrink: 0; max-width: none; margin: 0; padding: 8px 12px; border-top: 0; }
+  .rdr-feed-facts dd { overflow: hidden; text-overflow: ellipsis; }
 
   /*
    * 03 READER (items/_reader.html.erb; reading pane spec and the "Reading

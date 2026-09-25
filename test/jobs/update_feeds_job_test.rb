@@ -38,7 +38,7 @@ class UpdateFeedsJobTest < ActiveJob::TestCase
 
     event = feed.fetch_events.recent.first
     assert_equal "503", event.status
-    assert_equal "Service Unavailable", event.detail
+    assert_match(/\AService Unavailable · retry \d\d:\d\dZ \(attempt 1\/8\)\z/, event.detail)
     assert_equal 4, event.bytes
     assert feed.reload.fetch_failed?
   end
@@ -87,6 +87,40 @@ class UpdateFeedsJobTest < ActiveJob::TestCase
     end
 
     assert_equal "PARSE", feed.reload.last_fetch_status
+  end
+
+  test "the recurring run polls only feeds that are due; asked for, a user's or one feed's poll ignores the schedule" do
+    due = feeds(:one)
+    later = feeds(:two)
+    due.update!(next_fetch_at: 1.minute.ago)
+    later.update!(next_fetch_at: 10.minutes.from_now)
+    polled = []
+    not_modified = response(304)
+
+    with_fetch_stub(->(url, **) { polled << url; not_modified }) do
+      UpdateFeedsJob.perform_now
+      assert_equal [ due.feed_url ], polled
+
+      polled.clear
+      UpdateFeedsJob.perform_now(feed_id: later.id)
+      assert_equal [ later.feed_url ], polled
+    end
+  end
+
+  test "a success schedules the next poll and records it as the last OK fetch, with the feed's WebSub hub" do
+    feed = feeds(:one)
+    body = RSS_BODY.sub("<channel>", %(<channel><atom:link xmlns:atom="http://www.w3.org/2005/Atom" rel="hub" href="https://hub.example.com/"/>))
+    ok = response(200, body:)
+
+    freeze_time do
+      with_fetch_stub(->(*, **) { ok }) { UpdateFeedsJob.perform_now }
+
+      feed.reload
+      assert_equal Time.current + Feed::POLL_INTERVAL, feed.next_fetch_at
+      assert_equal [ Time.current, "200", body.bytesize ], [ feed.last_ok_at, feed.last_ok_status, feed.last_ok_bytes ]
+      assert_equal "https://hub.example.com/", feed.websub_hub
+      assert feed.last_item_at.present?
+    end
   end
 
   private

@@ -1,57 +1,6 @@
+<%# 02 FEED: the feed view (RDR-01 FeedTree, Feeds mode with a feed
+    selected; canvas ModeFeeds). FeedsController#update re-renders the
+    inside of this frame (feeds/_view) after a rename or move from it. %>
 <turbo-frame id="current_feed" data-action="turbo:frame-render->selection#feedNavigated">
-  <%= turbo_stream_from @feed %>
-  <div class="r-panel-h">
-    <%= link_to "← FEEDS", root_path, class: "rdr-phone-back", data: { turbo_frame: "_top", reader_back: "items" } %>
-    <span class="truncate">02 ITEMS — <%= @feed.title %></span>
-    <span class="r-label rdr-keys-hint"><span class="r-key">J</span> <span class="r-key">K</span> Open next / previous</span>
-  </div>
-  <%# Filter and bulk actions. Both forms submit inside this frame and
-      redirect back to the feed, so the list re-renders in place.
-      data-shortcut: selection_controller.js clicks these for ⇧U and ⇧R
-      (plain U is the reader's read / unread toggle). %>
-  <div class="rdr-toolbar">
-    <%= button_to preferences_path, method: :patch, form: { class: "contents" },
-          params: { user: { unread_only: !Current.user.unread_only? }, return_to: feed_path(@feed) },
-          class: "r-btn", aria: { pressed: Current.user.unread_only? }, data: { shortcut: "shift+u" } do %>
-      <span class="r-key">⇧U</span> Unread only
-    <% end %>
-    <% if @unread_count.positive? %>
-      <%= button_to feed_reading_path(@feed), form: { class: "contents", data: { turbo_confirm: "Mark #{pluralize(@unread_count, "unread item")} in #{@feed.title} read?" } },
-            class: "r-btn", data: { shortcut: "shift+r" } do %>
-        <span class="r-key">⇧R</span> Mark all read
-      <% end %>
-    <% else %>
-      <button type="button" class="r-btn" disabled><span class="r-key">⇧R</span> Mark all read — none unread</button>
-    <% end %>
-    <span class="r-label ml-auto"><%= rdr_number(@unread_count) %> unread · <%= rdr_number(@feed.items.size) %> total</span>
-  </div>
-  <div class="rdr-pane-scroll">
-    <%= render "items/table", items: @items, source: "author", tree_row: dom_id(@feed), sort: "time", feeds: [ @feed ] %>
-    <% if @items.none? %>
-      <p class="r-empty">
-        <% if Current.user.unread_only? && @feed.items.any? %>
-          No unread items. <%= rdr_number(@feed.items.size) %> read hidden — <span class="r-key">⇧U</span> shows them.
-        <% else %>
-          No items.
-        <% end %>
-      </p>
-    <% end %>
-  </div>
-
-  <%# RDR-01 FetchLog, collapsible under the item table. %>
-  <details class="rdr-log" open>
-    <summary class="r-panel-h">
-      04 LOG <span class="r-key">L</span>
-      <span class="r-label">Last <%= FetchEvent::RETENTION.inspect %></span>
-    </summary>
-    <div class="rdr-log-scroll">
-      <table class="r-table r-table-log">
-        <colgroup><col style="width:76px"><col style="width:88px"><col style="width:72px"><col style="width:72px"><col></colgroup>
-        <thead><tr><th>Time UTC</th><th>Result</th><th class="r-num">Size</th><th class="r-num">Took</th><th>Detail</th></tr></thead>
-        <tbody id="fetch_log">
-          <%= render partial: "fetch_events/fetch_event", collection: @feed.fetch_events.recent.limit(50) %>
-        </tbody>
-      </table>
-    </div>
-  </details>
+  <%= render "feeds/view" %>
 </turbo-frame>

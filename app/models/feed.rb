@@ -1,4 +1,15 @@
 class Feed < ApplicationRecord
+  # Polled every POLL_INTERVAL while healthy. After a failure, retried
+  # after each of RETRY_DELAYS in turn, then every RETRY_CAP; the first
+  # RETRY_ATTEMPTS count as "attempt n/8", and polling never stops.
+  POLL_INTERVAL = 30.minutes
+  RETRY_DELAYS = [ 30.minutes, 1.hour, 2.hours, 4.hours ].freeze
+  RETRY_CAP = 6.hours
+  RETRY_ATTEMPTS = 8
+
+  # Feeds whose next poll or retry is due (never-polled ones included).
+  scope :due, ->(now = Time.current) { where(next_fetch_at: nil).or(where(next_fetch_at: ..now)) }
+
   # Volume is measured over the last VOLUME_WINDOW of items.
   VOLUME_WINDOW = 8.weeks
   # STALE (RDR-01 `warn`: "no new items past its expected interval"): the
@@ -32,6 +43,8 @@ class Feed < ApplicationRecord
   accepts_nested_attributes_for :items
 
   validates_presence_of :link
+  # Renamed in the feed view; polls never overwrite it.
+  validates :title, presence: true, length: { maximum: 200 }, if: :title_changed?
   validate :folder_belongs_to_owner
 
   def unread_count
@@ -89,30 +102,51 @@ class Feed < ApplicationRecord
   end
 
   # Records one poll (UpdateFeedsJob): appends a FetchEvent for the log and
-  # updates the feed's own last-fetch state, which the feed tree and status
-  # bar read. `last_fetch_error_at`/`fetch_failures_count` track the current
-  # failure streak and reset on the next success. Validators (ETag,
-  # Last-Modified) are only replaced when the server sent new ones — a 304
-  # often omits them.
-  def record_fetch!(status:, detail:, bytes: nil, new_items_count: 0, duration_ms: nil, etag: nil, last_modified: nil)
+  # updates the feed's own last-fetch state, which the feed tree, status
+  # bar and feed view read, and schedules the next poll. A failure extends
+  # the streak (`failing_since`, `fetch_failures_count`, the latest in
+  # `last_fetch_error_at`) and schedules a retry, named in the log's
+  # detail; a success ends the streak and becomes the LAST OK fetch.
+  # Validators (ETag, Last-Modified) are only replaced when the server sent
+  # new ones — a 304 often omits them. `websub_hub` is only updated from a
+  # parsed body (`hub: false` leaves it).
+  def record_fetch!(status:, detail:, bytes: nil, new_items_count: 0, duration_ms: nil, etag: nil, last_modified: nil, hub: false)
     now = Time.current
     failed = FetchEvent.failure?(status)
+    attributes = { last_fetched_at: now, last_fetch_status: status, last_fetch_detail: detail, last_fetch_bytes: bytes }
+
+    if failed
+      failures = fetch_failures_count + 1
+      attributes.merge!(last_fetch_error_at: now, failing_since: failing_since || now, fetch_failures_count: failures,
+                        next_fetch_at: now + self.class.retry_delay(failures))
+      detail = [ detail.presence, retry_note(attributes[:next_fetch_at], failures) ].compact.join(" · ")
+    else
+      attributes.merge!(last_fetch_error_at: nil, failing_since: nil, fetch_failures_count: 0, next_fetch_at: now + POLL_INTERVAL,
+                        last_ok_at: now, last_ok_status: status, last_ok_bytes: bytes)
+      attributes[:etag] = etag if etag.present?
+      attributes[:last_modified] = last_modified if last_modified.present?
+      attributes[:websub_hub] = hub unless hub == false
+    end
 
     transaction do
       fetch_events.create!(status:, detail:, bytes:, new_items_count:, duration_ms:, created_at: now)
-
-      attributes = { last_fetched_at: now, last_fetch_status: status, last_fetch_detail: detail, last_fetch_bytes: bytes }
-      if failed
-        attributes.merge!(last_fetch_error_at: now, fetch_failures_count: fetch_failures_count + 1)
-      else
-        attributes.merge!(last_fetch_error_at: nil, fetch_failures_count: 0)
-        attributes[:etag] = etag if etag.present?
-        attributes[:last_modified] = last_modified if last_modified.present?
-      end
       update!(attributes)
     end
 
     broadcast_row
+  end
+
+  def self.retry_delay(failures)
+    RETRY_DELAYS[failures - 1] || RETRY_CAP
+  end
+
+  # `retry 08:28Z (attempt 3/8)`, or, past the counted attempts,
+  # `retry 14:28Z (every 6 h)`.
+  def retry_note(at = next_fetch_at, failures = fetch_failures_count)
+    return unless at
+
+    attempt = failures <= RETRY_ATTEMPTS ? "attempt #{failures}/#{RETRY_ATTEMPTS}" : "every #{RETRY_CAP.in_hours.to_i} h"
+    "retry #{at.utc.strftime("%H:%MZ")} (#{attempt})"
   end
 
   # The feed tree row, on the owner's own stream — never a stream shared

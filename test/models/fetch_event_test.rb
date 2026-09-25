@@ -10,15 +10,18 @@ class FetchEventTest < ActiveSupport::TestCase
     assert_equal "fail", FetchEvent.tone("TIMEOUT")
   end
 
-  test "prune deletes only events older than the retention window" do
-    feed = feeds(:one)
-    old = feed.fetch_events.create!(status: "200", created_at: 2.days.ago)
-    recent = feed.fetch_events.create!(status: "200", created_at: 1.hour.ago)
+  test "prune keeps each feed's newest events, however old" do
+    one = feeds(:one)
+    two = feeds(:two)
+    oldest = one.fetch_events.create!(status: "200", created_at: 3.days.ago)
+    kept = 2.times.map { |n| one.fetch_events.create!(status: "200", created_at: n.hours.ago) }
+    other = two.fetch_events.create!(status: "200", created_at: 30.days.ago)
 
-    FetchEvent.prune
+    FetchEvent.prune(keep: 2)
 
-    assert_not FetchEvent.exists?(old.id)
-    assert FetchEvent.exists?(recent.id)
+    assert_not FetchEvent.exists?(oldest.id)
+    assert kept.all? { |event| FetchEvent.exists?(event.id) }
+    assert FetchEvent.exists?(other.id)
   end
 
   test "creating an event prepends it to the feed's log stream" do

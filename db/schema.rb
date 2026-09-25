@@ -10,11 +10,12 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_25_184118) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_184354) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
     t.string "etag"
+    t.datetime "failing_since"
     t.string "feed_url"
     t.integer "fetch_failures_count", default: 0, null: false
     t.integer "folder_id"
@@ -26,11 +27,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_25_184118) do
     t.datetime "last_fetched_at"
     t.datetime "last_item_at"
     t.string "last_modified"
+    t.datetime "last_ok_at"
+    t.integer "last_ok_bytes"
+    t.string "last_ok_status"
     t.string "link"
+    t.datetime "next_fetch_at"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.string "websub_hub"
     t.index ["folder_id"], name: "index_feeds_on_folder_id"
+    t.index ["next_fetch_at"], name: "index_feeds_on_next_fetch_at"
     t.index ["user_id"], name: "index_feeds_on_user_id"
   end
 

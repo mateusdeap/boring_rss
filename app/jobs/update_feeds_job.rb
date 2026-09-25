@@ -19,9 +19,15 @@ class UpdateFeedsJob < ApplicationJob
     "URL" => [ FeedFetcher::UnsupportedURL ]
   }.freeze
 
-  # user_id: poll only that user's feeds (PollsController, [R] POLL NOW).
-  def perform(user_id: nil)
-    feeds = user_id ? Feed.where(user_id:) : Feed.all
+  # The recurring run polls the feeds that are due (Feed#next_fetch_at:
+  # every 30 min, backing off after failures). Asked for explicitly, it
+  # polls now regardless: user_id for [R] POLL NOW (PollsController),
+  # feed_id for a feed view's FETCH NOW (Feeds::FetchesController).
+  def perform(user_id: nil, feed_id: nil)
+    feeds = if feed_id then Feed.where(id: feed_id)
+    elsif user_id then Feed.where(user_id:)
+    else Feed.due
+    end
     feeds.includes(:user).find_each { |feed| poll(feed) }
     FetchEvent.prune
   end
@@ -65,7 +71,7 @@ class UpdateFeedsJob < ApplicationJob
       status: response.status.to_s,
       detail: join("#{parsed_feed.format} · #{entries.size} entries · #{new_entries.size} new", validators(response), via(response)),
       bytes: response.bytes, new_items_count: new_entries.size, duration_ms:,
-      etag: response.etag, last_modified: response.last_modified
+      etag: response.etag, last_modified: response.last_modified, hub: parsed_feed.websub_hub
     )
   end
 
