@@ -79,13 +79,13 @@
   <%# TEXT bar ([T]). Size and measure are one app-wide setting per user. %>
   <div class="rdr-bar" data-reader-text-target="bar" hidden>
     <span class="r-label">Size</span>
-    <span class="rdr-seg">
+    <span class="r-seg">
       <button type="button" class="r-btn rdr-seg-sq" aria-label="Smaller text" data-action="reader-text#smaller" data-reader-text-target="smaller">−</button>
       <span class="rdr-seg-value" data-reader-text-target="size"><%= user.reader_text_size %> px</span>
       <button type="button" class="r-btn rdr-seg-sq" aria-label="Larger text" data-action="reader-text#larger" data-reader-text-target="larger">+</button>
     </span>
     <span class="r-label">Measure</span>
-    <span class="rdr-seg" role="group" aria-label="Measure">
+    <span class="r-seg" role="group" aria-label="Measure">
       <% User::READER_MEASURES.each do |measure| %>
         <% current = measure == user.reader_measure %>
         <button type="button" class="r-btn" aria-pressed="<%= current %>" data-measure="<%= measure %>"
