@@ -16,7 +16,7 @@
     class="<%= class_names("has-unread": unread.positive?, "r-child": feed.folder) %>">
   <span></span>
   <%# tabindex -1: the row is the tab stop (roving tabindex); Enter on it clicks this. %>
-  <%= link_to feed.title, feed_path(feed.id), data: { turbo_frame: "current_feed" }, class: "r-name", tabindex: -1 %>
+  <%= link_to feed.title, feed_path(feed.id), data: { turbo_frame: "current_feed", turbo_action: "advance" }, class: "r-name", tabindex: -1 %>
   <% if feed.fetch_failed? %>
     <%= status_code_tag feed.last_fetch_status, title: fetch_failure_summary(feed) %>
   <% elsif feed.last_fetched_at? %>

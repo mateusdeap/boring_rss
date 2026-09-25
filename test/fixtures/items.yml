@@ -4,10 +4,14 @@ one:
   title: MyString
   link: MyString
   summary: MyString
+  content_kind: full
+  content_source: content:encoded
   feed: one
 
 two:
   title: MyString
   link: MyString
   summary: MyString
+  content_kind: excerpt
+  content_source: description
   feed: two

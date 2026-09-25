@@ -1,0 +1,17 @@
+<%# Shown by reader_loading_controller.js when an item takes more than
+    150ms to load — text only, never a spinner (RDR-01). J / K keep working
+    underneath. %>
+<div class="rdr-reader rdr-loading" data-reader-loading-target="panel" hidden>
+  <div class="r-panel-h">
+    03 READER
+    <span class="r-dim truncate" data-reader-loading-target="header">LOADING…</span>
+  </div>
+  <div class="rdr-details rdr-details-line"><span class="r-label">▾ Details</span> <span class="r-dim">LOADING…</span></div>
+  <div class="rdr-reader-scroll">
+    <div class="rdr-empty-state">
+      <span data-reader-loading-target="title">LOADING…</span>
+      <span class="r-dim" data-reader-loading-target="request"></span>
+    </div>
+  </div>
+  <div class="rdr-statusline"><span>LOADING…</span><span><span class="r-key">J</span> / <span class="r-key">K</span> still work</span></div>
+</div>

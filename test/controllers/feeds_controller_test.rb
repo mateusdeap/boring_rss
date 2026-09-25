@@ -114,7 +114,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feed_url(feed)
     assert_select "tr#item_#{read_item.id}", count: 0
     assert_select "tr#item_#{unread_item.id}"
-    assert_select "button[aria-pressed=true][data-shortcut=u]"
+    assert_select "button[aria-pressed=true][data-shortcut='shift+u']"
   end
 
   test "mark all read is disabled with its reason when nothing is unread" do
@@ -131,5 +131,29 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     get feeds_url
 
     assert_select "#feeds > li:first-child#marked_view .rdr-count-mark", text: "1"
+  end
+
+  test "loaded as its own URL, show renders the whole app on the items screen" do
+    get feed_url(feeds(:one))
+
+    assert_select ".rdr-panes[data-screen=items]"
+    assert_select "#current_feed #items[data-tree-row=feed_#{feeds(:one).id}]"
+    assert_select "#current_item", text: /No item selected/
+  end
+
+  test "index shows the unread count and the first-unread action when nothing is open" do
+    get feeds_url
+
+    assert_select ".rdr-panes[data-screen=feeds]"
+    assert_select "#current_item", text: /1 unread in 1 feed/
+    assert_select "a[data-open-first-unread][href='#{first_unread_items_path}']"
+  end
+
+  test "index offers to poll now when nothing is unread" do
+    users(:one).items.update_all(read: true)
+
+    get feeds_url
+
+    assert_select "#current_item form[action='#{poll_path}'] button[data-reader-key=r]", text: /Poll now/
   end
 end

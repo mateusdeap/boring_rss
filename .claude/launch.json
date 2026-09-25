@@ -4,9 +4,28 @@
     {
       "name": "web",
       "runtimeExecutable": "mise",
-      "runtimeArgs": ["exec", "--", "bin/dev"],
+      "runtimeArgs": [
+        "exec",
+        "--",
+        "bin/dev"
+      ],
       "port": 3000,
       "autoPort": true
+    },
+    {
+      "name": "web-preview",
+      "runtimeExecutable": "mise",
+      "runtimeArgs": [
+        "exec",
+        "--",
+        "bin/rails",
+        "server",
+        "-p",
+        "3001",
+        "-P",
+        "tmp/pids/preview.pid"
+      ],
+      "port": 3001
     }
   ]
 }

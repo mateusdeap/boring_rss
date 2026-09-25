@@ -1,0 +1,54 @@
+<%# The app: feed tree, item list, reader. Every screen has its own URL —
+    `/`, `/feeds/:id`, `/marked`, `/items/:id` — each rendering this whole
+    shell with its own panes filled in, so reloads and the browser's back
+    button land where you were on every layout. Tree and item links load
+    into the frames and advance the address bar (data-turbo-action).
+
+    data-screen (feeds / items / reader) is which pane is in front where
+    they don't all fit: under 1100px the reader replaces the item list,
+    under 640px one pane shows at a time (Feeds → Items → Reader).
+    selection_controller.js moves it as frames load and on back.
+
+    Keys: reader_keys_controller.js listens on the document and
+    selection_controller.js on the window, so reader keys (Esc layers)
+    run first and selection skips what they already handled.
+
+    locals: screen, items_frame (HTML), reader_frame (HTML) %>
+<% content_for :app_shell, "true" %>
+<%= turbo_stream_from Current.user, :feeds %>
+<div class="rdr-panes" data-screen="<%= screen %>"
+     data-controller="context-menu selection"
+     data-action="keydown@window->selection#key touchstart->selection#swipeStart touchend->selection#swipeEnd">
+  <section class="rdr-pane rdr-pane-tree" aria-label="Feeds">
+    <div class="r-panel-h">
+      01 FEEDS
+      <button class="r-btn r-btn-primary" command="show-modal" commandfor="add-feed-dialog"><span class="r-key">A</span> Add feed</button>
+    </div>
+    <div class="rdr-pane-scroll">
+      <ul class="r-tree" role="tree" aria-label="Feeds" id="feeds" data-action="contextmenu->context-menu#open keydown->selection#treeKey">
+        <%= render "feeds/tree", user: Current.user %>
+      </ul>
+    </div>
+  </section>
+
+  <section class="rdr-pane rdr-pane-items" aria-label="Items">
+    <%= items_frame || render("feeds/no_feed") %>
+  </section>
+
+  <section class="rdr-pane rdr-pane-reader" aria-label="Reader"
+           data-controller="reader-keys reader-loading"
+           data-action="keydown@document->reader-keys#key turbo:before-fetch-request->reader-loading#start turbo:frame-render->reader-loading#stop turbo:fetch-request-error->reader-loading#stop">
+    <%= reader_frame || render("items/no_selection") %>
+    <%= render "items/loading" %>
+  </section>
+
+  <%= render "feeds/context_menu" %>
+</div>
+
+<%= render "feeds/keys" %>
+<%= render "folders/dialogs" %>
+<%= render "folders/datalist", user: Current.user %>
+
+<dialog id="add-feed-dialog" class="r-dialog" data-controller="add-feed-modal" data-action="turbo:submit-end->add-feed-modal#handleSubmission">
+  <%= render "feeds/form", feed: Feed.new %>
+</dialog>

@@ -1,0 +1,225 @@
+<%# 03 READER (reading pane spec + the "Reading pane ideas" canvas). Slots,
+    top to bottom: pane header, toolbar, TEXT bar, FIND bar, details
+    (expanded and collapsed), notice (EXCERPT / EMPTY), the article with
+    its end box, status line. On phones the header and toolbar give way to
+    a 44px top bar and a 48px bottom bar (CSS, .rdr-phone-*).
+
+    Controllers on .rdr-reader, all reconnected with each item:
+      reader-text      TEXT bar: size and measure, saved to the user
+      reader-details   [I] expand / collapse, saved to the user
+      reader-find      FIND bar: highlights in the article, N / ⇧N
+      reader-progress  POS % and minutes left in the status line
+    Keys come from reader-keys on the pane (outside this frame); it drives
+    these through reader:* events and the data-reader-key buttons, so
+    every shortcut is also a printed control.
+
+    The header's position ("ITEM 3 / 7 · 5 unread") is filled in by
+    selection_controller.js from the item list; the server only knows the
+    feed. %>
+<% user = Current.user %>
+<% feed = item.feed %>
+<% safe_link = safe_item_link(item.link) %>
+<% host = safe_link && link_host(safe_link) %>
+<% content = reader_content(item) unless item.content_empty? %>
+<div class="rdr-reader" data-item-id="<%= item.id %>"
+     data-controller="reader-text reader-details reader-find reader-progress"
+     data-action="reader-text:changed->reader-progress#update reader-details:changed->reader-progress#update reader:text-toggle->reader-text#toggle reader:details-toggle->reader-details#toggle reader:find-open->reader-find#open reader:find-close->reader-find#close reader:find-next->reader-find#next reader:find-prev->reader-find#prev"
+     data-details-expanded="<%= user.reader_details_expanded? %>"
+     data-reader-text-size-value="<%= user.reader_text_size %>"
+     data-reader-text-measure-value="<%= user.reader_measure %>"
+     data-reader-progress-minutes-value="<%= item.reading_minutes %>"
+     data-reader-progress-kind-value="<%= item.content_kind %>"
+     style="--reader-size: <%= user.reader_text_size %>px; --reader-measure: <%= user.reader_measure %>ch">
+
+  <%# Pane header. The back link shows under 1100px only. %>
+  <div class="r-panel-h rdr-reader-h">
+    <span class="rdr-reader-h-left">
+      <%= link_to feed_path(feed), class: "rdr-back", data: { turbo_frame: "current_feed", turbo_action: "advance", reader_back: "reader" } do %>
+        <span class="r-key">ESC</span> ← 02 ITEMS
+      <% end %>
+      03 READER
+    </span>
+    <span class="rdr-reader-pos r-dim">
+      <span class="rdr-pos-wide" data-reader-position="wide"><%= feed.title %></span>
+      <span class="rdr-pos-narrow" data-reader-position="narrow"><%= feed.title %></span>
+    </span>
+  </div>
+
+  <%# Phone top bar (< 640px). %>
+  <div class="rdr-phone-top">
+    <%= link_to "← ITEMS", feed_path(feed), class: "rdr-phone-top-btn", data: { turbo_frame: "current_feed", turbo_action: "advance", reader_back: "reader" } %>
+    <div class="rdr-phone-top-title">
+      <span>03 READER</span>
+      <span class="r-dim truncate" data-reader-position="narrow"><%= feed.title %></span>
+    </div>
+    <% if safe_link %>
+      <%= link_to "OPEN ↗", safe_link, class: "rdr-phone-top-btn", target: "_blank", rel: "noopener" %>
+    <% end %>
+  </div>
+
+  <%# Toolbar. %>
+  <div class="rdr-reader-toolbar" role="toolbar" aria-label="Item">
+    <button type="button" class="r-btn" data-action="selection#prev"><span class="r-key">K</span> Prev</button>
+    <button type="button" class="r-btn" data-action="selection#next"><span class="r-key">J</span> Next</button>
+    <%= render "items/reading_button", item: %>
+    <%= render "items/mark_button", item: %>
+    <span class="rdr-gap"></span>
+    <button type="button" class="r-btn" data-action="reader-find#toggle" data-reader-find-target="toggle" aria-pressed="false"><span class="r-key">/</span> Find</button>
+    <button type="button" class="r-btn" data-action="reader-text#toggle" data-reader-text-target="toggle" aria-pressed="false"><span class="r-key">T</span> Text</button>
+    <span class="rdr-grow"></span>
+    <% if safe_link %>
+      <%= link_to safe_link, class: "r-btn", target: "_blank", rel: "noopener", data: { original_link: true } do %>
+        <span class="r-key">V</span> Open ↗
+      <% end %>
+    <% else %>
+      <button type="button" class="r-btn" disabled><span class="r-key">V</span> Open — no link</button>
+    <% end %>
+  </div>
+
+  <%# TEXT bar ([T]). Size and measure are one app-wide setting per user. %>
+  <div class="rdr-bar" data-reader-text-target="bar" hidden>
+    <span class="r-label">Size</span>
+    <span class="rdr-seg">
+      <button type="button" class="r-btn rdr-seg-sq" aria-label="Smaller text" data-action="reader-text#smaller" data-reader-text-target="smaller">−</button>
+      <span class="rdr-seg-value" data-reader-text-target="size"><%= user.reader_text_size %> px</span>
+      <button type="button" class="r-btn rdr-seg-sq" aria-label="Larger text" data-action="reader-text#larger" data-reader-text-target="larger">+</button>
+    </span>
+    <span class="r-label">Measure</span>
+    <span class="rdr-seg" role="group" aria-label="Measure">
+      <% User::READER_MEASURES.each do |measure| %>
+        <% current = measure == user.reader_measure %>
+        <button type="button" class="r-btn" aria-pressed="<%= current %>" data-measure="<%= measure %>"
+                data-action="reader-text#measure" data-reader-text-target="measure"><%= current ? "#{measure} ch" : measure %></button>
+      <% end %>
+    </span>
+    <span class="rdr-grow"></span>
+    <span class="r-dim" data-reader-text-target="status">saved · all feeds</span>
+  </div>
+
+  <%# FIND bar ([/]). Current article only; clears with the next item. %>
+  <div class="rdr-bar" data-reader-find-target="bar" hidden>
+    <label class="r-label" for="<%= dom_id(item, :find) %>">Find</label>
+    <input id="<%= dom_id(item, :find) %>" type="search" class="r-input rdr-find-input" autocomplete="off" spellcheck="false"
+           data-reader-find-target="input" data-action="input->reader-find#search keydown->reader-find#inputKey">
+    <span class="rdr-find-count" data-reader-find-target="count"></span>
+    <span class="r-dim rdr-find-hint">
+      <%= item.content_full? ? "in article" : "in feed excerpt" %> ·
+      <button type="button" class="rdr-text-btn" data-action="reader-find#next"><span class="r-key">N</span> Next</button> ·
+      <button type="button" class="rdr-text-btn" data-action="reader-find#prev"><span class="r-key">⇧N</span> Prev</button> ·
+      <button type="button" class="rdr-text-btn" data-action="reader-find#close"><span class="r-key">ESC</span> Close</button>
+    </span>
+  </div>
+
+  <%# Details ([I]): one app-wide setting, expanded by default. %>
+  <div class="rdr-details rdr-details-full">
+    <div class="rdr-details-h">
+      <span class="r-label">▾ Details</span>
+      <button type="button" class="rdr-text-btn r-dim" data-action="reader-details#toggle"><span class="r-key">I</span> Collapse</button>
+    </div>
+    <dl class="rdr-details-grid">
+      <dt>Feed</dt>
+      <dd><%= feed.title %> <span class="r-dim">· <%= bare_url(feed.feed_url) %></span></dd>
+      <dt>Published</dt>
+      <dd>
+        <% if item.published_at %>
+          <%= rdr_time(item.published_at) %> <span class="r-dim">· <%= rdr_age(item.published_at) %> ago · <%= item_author(item) %></span>
+        <% else %>
+          <span class="r-dim">no date · <%= item_author(item) %></span>
+        <% end %>
+      </dd>
+      <dt>Fetched</dt>
+      <dd>
+        <% if feed.last_fetched_at %>
+          <%= rdr_time(feed.last_fetched_at) %> · <%= fetch_status_tag(feed) %>
+          <span class="r-dim"><%= "· #{rdr_bytes(feed.last_fetch_bytes)}" if feed.last_fetch_bytes %><%= " · #{short_etag(feed.etag)}" if feed.etag.present? %></span>
+        <% else %>
+          <span class="r-dim">not fetched since it was added</span>
+        <% end %>
+      </dd>
+      <dt>Content</dt>
+      <dd>
+        <%= content_kind_tag(item) %> <%= content_source_label(item) %>
+        <span class="r-dim">· <%= rdr_number(item.word_count) %> w<%= " · ~#{item.reading_minutes} min" if item.word_count.positive? %> · <%= item.image_count %> img · <%= pluralize(item.link_count, "link") %><%= " · #{pluralize(content.pixels_stripped, "pixel")} stripped" if content&.pixels_stripped&.positive? %><%= " · #{content.tables_unwrapped} of #{pluralize(content.tables, "table")} unwrapped" if content&.tables_unwrapped&.positive? %></span>
+      </dd>
+      <dt>URL</dt>
+      <dd>
+        <% if safe_link %>
+          <%= link_to "#{bare_url(safe_link)} ↗", safe_link, target: "_blank", rel: "noopener" %>
+        <% else %>
+          <span class="r-dim">none</span>
+        <% end %>
+      </dd>
+    </dl>
+  </div>
+  <div class="rdr-details rdr-details-line">
+    <button type="button" class="rdr-details-line-btn" data-action="reader-details#toggle" aria-label="Expand details">
+      <span class="r-label">▸ Details</span>
+      <span class="rdr-details-summary">
+        <span class="rdr-details-feed"><%= feed.title %></span>
+        <% if item.published_at %><span class="r-dim">·</span> <span><%= rdr_age(item.published_at) %></span><% end %>
+        <% if feed.last_fetch_status %><span class="r-dim">·</span> <%= tag.span(feed.last_fetch_status, class: "rdr-tone rdr-tone-#{FetchEvent.tone(feed.last_fetch_status)}") %><% end %>
+        <span class="r-dim">·</span> <span><%= rdr_number(item.word_count) %> w</span>
+        <span class="r-dim">·</span> <%= content_kind_tag(item) %>
+      </span>
+      <span class="r-dim rdr-details-key"><span class="r-key">I</span> Expand</span>
+    </button>
+  </div>
+
+  <%# Notice: the feed didn't send the whole article. %>
+  <% unless item.content_full? %>
+    <div class="rdr-notice">
+      <span class="rdr-tone rdr-tone-warn"><%= item.content_kind.upcase %></span>
+      <span class="r-2">
+        <% if item.content_excerpt? %>
+          This feed sends <%= content_source_label(item) || "an excerpt" %> only, no full content. <%= rdr_number(item.word_count) %> w shown; the rest is on the publisher's site.
+        <% else %>
+          Entry has a title and link only: no &lt;description&gt;, &lt;content:encoded&gt; or Atom &lt;content&gt;.
+        <% end %>
+      </span>
+    </div>
+  <% end %>
+
+  <div class="rdr-reader-scroll" data-reader-progress-target="scroller" data-action="scroll->reader-progress#update" tabindex="-1">
+    <article class="rdr-article" data-reader-find-target="article">
+      <h1 class="rdr-headline"><%= item.title.presence || "Untitled" %></h1>
+      <p class="rdr-byline"><%= item_author(item) %><%= " · #{rdr_time(item.published_at)}" if item.published_at %></p>
+
+      <% if item.content_empty? %>
+        <div class="rdr-endbox">
+          <span class="r-2">NO CONTENT IN FEED</span>
+          <% if safe_link %>
+            <%= link_to safe_link, target: "_blank", rel: "noopener" do %><span class="r-key">V</span> OPEN ON <%= host %> ↗<% end %>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="r-body"><%= content.html %></div>
+        <% if item.content_excerpt? %>
+          <div class="rdr-endbox">
+            <span class="r-2">END OF FEED CONTENT · <%= rdr_number(item.word_count) %> w · <%= pluralize(item.image_count, "image") %></span>
+            <% if safe_link %>
+              <%= link_to safe_link, target: "_blank", rel: "noopener" do %><span class="r-key">V</span> CONTINUE ON <%= host %> ↗<% end %>
+            <% end %>
+          </div>
+        <% end %>
+      <% end %>
+    </article>
+  </div>
+
+  <%# Status line; POS and time left come from reader-progress. %>
+  <div class="rdr-statusline">
+    <span><span data-reader-progress-target="position">POS —</span><span class="rdr-statusline-inline" data-reader-progress-target="inlineLeft"></span></span>
+    <span class="rdr-statusline-hint" data-reader-progress-target="hint">
+      <% if item.content_empty? %>read on open · <span class="r-key">U</span> undo<% else %><span class="r-key">SPACE</span> page · read on open · <span class="r-key">U</span> undo<% end %>
+    </span>
+    <span class="rdr-statusline-left" data-reader-progress-target="left"></span>
+  </div>
+
+  <%# Phone bottom bar (< 640px): no shortcut labels. %>
+  <div class="rdr-phone-bottom">
+    <button type="button" data-action="selection#prev">Prev</button>
+    <button type="button" data-action="selection#next">Next</button>
+    <button type="button" data-action="selection#markCurrent">Mark</button>
+    <button type="button" data-action="reader-find#toggle">Find</button>
+    <button type="button" data-action="reader-text#toggle">Text</button>
+  </div>
+</div>

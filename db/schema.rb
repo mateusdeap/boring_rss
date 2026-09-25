@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_170000) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_24_191958) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
@@ -18,6 +18,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_170000) do
     t.string "feed_url"
     t.integer "fetch_failures_count", default: 0, null: false
     t.integer "folder_id"
+    t.integer "last_fetch_bytes"
     t.string "last_fetch_detail"
     t.datetime "last_fetch_error_at"
     t.string "last_fetch_status"
@@ -55,16 +56,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_170000) do
   end
 
   create_table "items", force: :cascade do |t|
+    t.string "author"
+    t.string "content_kind", default: "empty", null: false
+    t.string "content_source"
     t.datetime "created_at", null: false
     t.integer "feed_id", null: false
     t.string "guid"
+    t.integer "image_count", default: 0, null: false
     t.string "link"
+    t.integer "link_count", default: 0, null: false
     t.boolean "marked", default: false, null: false
     t.datetime "published_at"
     t.boolean "read", default: false, null: false
     t.string "summary"
     t.string "title"
     t.datetime "updated_at", null: false
+    t.integer "word_count", default: 0, null: false
     t.index ["feed_id", "guid"], name: "index_items_on_feed_id_and_guid", unique: true
     t.index ["feed_id"], name: "index_items_on_feed_id"
   end
@@ -82,6 +89,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_170000) do
     t.datetime "created_at", null: false
     t.string "email_address", null: false
     t.string "password_digest", null: false
+    t.boolean "reader_details_expanded", default: true, null: false
+    t.integer "reader_measure", default: 68, null: false
+    t.integer "reader_text_size", default: 16, null: false
     t.string "theme", default: "system", null: false
     t.boolean "unread_only", default: false, null: false
     t.datetime "updated_at", null: false

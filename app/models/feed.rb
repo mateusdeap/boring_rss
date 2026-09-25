@@ -49,7 +49,7 @@ class Feed < ApplicationRecord
     transaction do
       fetch_events.create!(status:, detail:, bytes:, new_items_count:, duration_ms:, created_at: now)
 
-      attributes = { last_fetched_at: now, last_fetch_status: status, last_fetch_detail: detail }
+      attributes = { last_fetched_at: now, last_fetch_status: status, last_fetch_detail: detail, last_fetch_bytes: bytes }
       if failed
         attributes.merge!(last_fetch_error_at: now, fetch_failures_count: fetch_failures_count + 1)
       else

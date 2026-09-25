@@ -1,0 +1,10 @@
+<%# Reader's [U] UNREAD toggle — pressed while the item is unread. Opening
+    an item marks it read, so this is normally the undo. Replaced by
+    Items::ReadingsController's stream response; U clicks it
+    (reader_keys_controller.js). %>
+<span id="<%= dom_id(item, :reading) %>" class="contents">
+  <%= button_to item_reading_path(item), method: item.read? ? :delete : :post, form: { class: "contents" },
+        class: "r-btn", aria: { pressed: !item.read? }, data: { reader_key: "u" } do %>
+    <span class="r-key">U</span> Unread
+  <% end %>
+</span>

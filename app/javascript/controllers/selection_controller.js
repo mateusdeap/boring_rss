@@ -7,27 +7,37 @@ import { Controller } from "@hotwired/stimulus"
 // clicks, so clicking dead space in a row never marks it selected without
 // the pane actually changing.
 //
-// Also owns `data-reading` on the pane grid: under 1100px the reader
-// replaces the item table (see .rdr-panes in application.css), so opening
-// an item sets it and the reader's BACK button (or Esc) clears it.
+// Also owns `data-screen` on the pane grid (feeds / items / reader): which
+// pane is in front where they don't all fit (see .rdr-panes in
+// application.css). A feed loading shows the items, an item loading shows
+// the reader; the back links (ESC ← 02 ITEMS, ← ITEMS, ← FEEDS) are real
+// links, so every screen has its own URL. On phones a swipe from the left
+// edge follows the screen's back link.
 //
 // Keyboard (RDR-01: shortcuts are printed on the controls they trigger;
-// the full list is the KEYS dialog in feeds/index.html.erb):
-//   J / K     move the item cursor; Enter opens the item under it
+// the full list is the KEYS dialog in feeds/_keys.html.erb). Listens on
+// window, after reader_keys_controller.js (document), which owns the
+// reader's keys — U, V, /, N, T, I, Space, C, R and Esc:
+//   J / K     open the next / previous item (reading pane spec: the
+//             reader's [J] NEXT / [K] PREV); with nothing open, J opens
+//             the first unread. Opening marks the item read; U undoes it.
 //   ↑ / ↓     move within the feed tree (roving tabindex, WAI-ARIA tree
 //             pattern); Enter or → opens a feed; on a folder, Enter
 //             toggles it, → expands, ← collapses (← on a feed inside a
 //             folder moves to the folder)
-//   M         mark / unmark the item under the cursor
-//   U         unread-only filter    ⇧R  mark all read (current feed)
+//   M         mark / unmark the open item
+//   ⇧U        unread-only filter    ⇧R  mark all read (current feed)
 //   A         add feed        L  toggle the fetch log
-//   O         open the current item's original page
-//   ?         show all keys   Esc  back to items (narrow layout)
-// J/K move a cursor rather than open, so skimming never marks items read —
-// only opening does (Item#mark_read!).
+//   ?         show all keys
 export default class extends Controller {
   connect() {
-    this.selected = { feedRowId: null, itemRowId: null, focusedPane: null }
+    // A full page load (an item's or feed's own URL) arrives with its
+    // panes already filled in; pick the selection up from them.
+    this.selected = {
+      feedRowId: this.element.querySelector("#items")?.dataset.treeRow || null,
+      itemRowId: this.openItemId ? `item_${this.openItemId}` : null,
+      focusedPane: this.openItemId ? "items" : null
+    }
 
     // Item/feed rows get replaced live by Turbo Stream broadcasts (e.g.
     // Item#mark_read! re-rendering the very row you just selected), which
@@ -56,7 +66,7 @@ export default class extends Controller {
 
     this.selected.feedRowId = treeRowId
     this.selected.focusedPane = "tree"
-    this.element.dataset.reading = "false"
+    this.element.dataset.screen = "items"
     this.applySelection()
   }
 
@@ -66,12 +76,34 @@ export default class extends Controller {
 
     this.selected.itemRowId = `item_${itemId}`
     this.selected.focusedPane = "items"
-    this.element.dataset.reading = "true"
+    this.element.dataset.screen = "reader"
     this.applySelection()
+    event.target.querySelector(".rdr-reader-scroll")?.focus({ preventScroll: true })
   }
 
-  back() {
-    this.element.dataset.reading = "false"
+  // The reader's [K] PREV / [J] NEXT and the phone bottom bar.
+  prev() { this.openAdjacent(-1) }
+  next() { this.openAdjacent(1) }
+  markCurrent() { this.toggleMark() }
+
+  // Phone: a swipe from the left edge goes back one screen, like the
+  // screen's own back link.
+  swipeStart(event) {
+    const touch = event.touches[0]
+    this.swipe = touch.clientX < 24 ? { x: touch.clientX, y: touch.clientY } : null
+  }
+
+  swipeEnd(event) {
+    if (!this.swipe) return
+    const touch = event.changedTouches[0]
+    const dx = touch.clientX - this.swipe.x
+    const dy = Math.abs(touch.clientY - this.swipe.y)
+    this.swipe = null
+    if (dx < 80 || dy > dx / 2) return
+
+    const back = [...this.element.querySelectorAll(`[data-reader-back='${this.element.dataset.screen}']`)]
+      .find((link) => link.checkVisibility())
+    back?.click()
   }
 
   // keydown@document — page-wide single-key shortcuts. Letters are matched
@@ -82,21 +114,19 @@ export default class extends Controller {
     if (this.ignored(event)) return
 
     switch (this.combo(event)) {
-      case "j": return this.handled(event, () => this.moveItem(1))
-      case "k": return this.handled(event, () => this.moveItem(-1))
+      case "j": return this.handled(event, () => this.openAdjacent(1))
+      case "k": return this.handled(event, () => this.openAdjacent(-1))
       case "Enter":
         // Enter on a focused control keeps its own meaning.
         if (event.target.closest("a, button, summary")) return
         return this.openItemUnderCursor(event)
       case "m": return this.handled(event, () => this.toggleMark())
-      case "u":
+      case "shift+u":
       case "shift+r":
         return this.clickShortcut(event, this.combo(event))
       case "a": return this.handled(event, () => document.getElementById("add-feed-dialog")?.showModal())
       case "l": return this.handled(event, () => this.toggleLog())
-      case "o": return this.handled(event, () => this.element.querySelector("[data-original-link]")?.click())
       case "?": return this.handled(event, () => document.getElementById("keys-dialog")?.showModal())
-      case "Escape": return this.back()
     }
   }
 
@@ -160,20 +190,31 @@ export default class extends Controller {
     return folderId && this.element.querySelector(`#feeds [data-folder-id="${folderId}"]`)
   }
 
-  moveItem(delta) {
+  // Opens the item after / before the open one in the list. With nothing
+  // open, J starts at the first unread row — or, with no list loaded, the
+  // reader's [J] OPEN FIRST UNREAD (newest unread across all feeds).
+  openAdjacent(delta) {
     const rows = [...this.element.querySelectorAll("#items > tr")]
-    if (rows.length === 0) return
-
     const current = rows.findIndex((row) => row.id === this.selected.itemRowId)
-    const next = current === -1 ? 0 : Math.min(Math.max(current + delta, 0), rows.length - 1)
+    let next
 
-    this.selected.itemRowId = rows[next].id
+    if (current === -1) {
+      if (delta < 0) return
+      next = rows.find((row) => row.classList.contains("is-unread")) || rows[0]
+      if (!next) return this.element.querySelector("[data-open-first-unread]")?.click()
+    } else {
+      next = rows[current + delta]
+      if (!next) return
+    }
+
+    this.selected.itemRowId = next.id
     this.selected.focusedPane = "items"
-    // Keys now belong to the item table: take DOM focus out of the tree so
-    // a following Enter opens the item, not the focused feed row.
+    // Keys now belong to the items: take DOM focus out of the tree so a
+    // following Enter doesn't open the focused feed row.
     if (document.activeElement?.closest("#feeds")) document.activeElement.blur()
     this.applySelection()
-    rows[next].scrollIntoView({ block: "nearest" })
+    next.scrollIntoView({ block: "nearest" })
+    next.querySelector("a")?.click()
   }
 
   openItemUnderCursor(event) {
@@ -183,14 +224,15 @@ export default class extends Controller {
     if (link) this.handled(event, () => link.click())
   }
 
-  // M acts on the cursor row (J/K), else on the item open in the reader.
-  // Items::MarksController answers with Turbo Streams for the row and the
-  // reader's MARK button; render them here since this isn't a form submit.
+  // M acts on the selected row (the open item). Items::MarksController
+  // answers with Turbo Streams for the row and the reader's MARK button;
+  // render them here since this isn't a form submit. Without the row (the
+  // item's feed isn't the list shown), the reader's own MARK button does it.
   async toggleMark() {
-    const readerId = this.element.querySelector("[data-item-id]")?.dataset.itemId
-    const row = (this.selected.itemRowId && document.getElementById(this.selected.itemRowId)) ||
-      (readerId && document.getElementById(`item_${readerId}`))
-    if (!row?.dataset.markUrl) return
+    const row = this.selected.itemRowId && document.getElementById(this.selected.itemRowId)
+    if (!row?.dataset.markUrl) {
+      return this.element.querySelector(`#mark_item_${this.openItemId} button`)?.click()
+    }
 
     const response = await fetch(row.dataset.markUrl, {
       method: row.dataset.marked === "true" ? "DELETE" : "POST",
@@ -229,6 +271,37 @@ export default class extends Controller {
     this.select(this.selected.feedRowId, this.selected.focusedPane === "tree")
     this.select(this.selected.itemRowId, this.selected.focusedPane === "items")
     this.updateTreeTabStop()
+    this.updateReaderPosition()
+  }
+
+  // The reader header's "ITEM 3 / 7 · 5 unread" (wide) and "Field Notes ·
+  // 3 / 7" (narrow, phone), from the list on screen; and its back links,
+  // which return to that list (a feed or the Marked view) rather than
+  // always the item's own feed.
+  updateReaderPosition() {
+    const reader = this.element.querySelector(".rdr-reader[data-item-id]")
+    if (!reader) return
+
+    const rows = [...this.element.querySelectorAll("#items > tr")]
+    const row = document.getElementById(`item_${reader.dataset.itemId}`)
+    const index = rows.indexOf(row)
+    if (index !== -1) {
+      const unread = rows.filter((tr) => tr.classList.contains("is-unread")).length
+      const feed = row.querySelector(".r-feed")?.textContent.trim()
+      reader.querySelectorAll("[data-reader-position='wide']").forEach((el) => {
+        el.textContent = `ITEM ${index + 1} / ${rows.length} · ${unread} unread`
+      })
+      reader.querySelectorAll("[data-reader-position='narrow']").forEach((el) => {
+        el.textContent = `${feed} · ${index + 1} / ${rows.length}`
+      })
+    }
+
+    const listUrl = this.element.querySelector("#current_feed")?.getAttribute("src")
+    if (listUrl) reader.querySelectorAll("[data-reader-back='reader']").forEach((link) => { link.href = listUrl })
+  }
+
+  get openItemId() {
+    return this.element.querySelector(".rdr-reader[data-item-id]")?.dataset.itemId
   }
 
   select(rowId, focused) {

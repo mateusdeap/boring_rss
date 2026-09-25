@@ -1,0 +1,56 @@
+<%# The reader with nothing open: what's unread and how to start, or —
+    with nothing unread — when the feeds were last polled and a way to poll
+    now. Also lists the reader's keys (keep in step with feeds/_keys). %>
+<% unread = Current.user.items.unread %>
+<% unread_count = unread.count %>
+<turbo-frame id="current_item" data-action="turbo:frame-render->selection#itemNavigated">
+  <div class="rdr-reader rdr-reader-empty">
+    <div class="r-panel-h">
+      03 READER
+      <span class="r-dim">no item selected</span>
+    </div>
+    <div class="rdr-reader-scroll">
+      <div class="rdr-empty-state">
+        <% if unread_count.positive? %>
+          <section>
+            <span class="r-label">No item selected</span>
+            <p class="rdr-empty-lead"><%= rdr_number(unread_count) %> unread in <%= pluralize(unread.distinct.count(:feed_id), "feed") %>.</p>
+            <div><%= link_to first_unread_items_path, class: "r-btn", data: { turbo_frame: "_top", open_first_unread: true } do %><span class="r-key">J</span> Open first unread<% end %></div>
+          </section>
+        <% else %>
+          <% last_poll = Current.user.feeds.maximum(:last_fetched_at) %>
+          <% next_poll = next_poll_at %>
+          <section>
+            <span class="r-label">Nothing unread</span>
+            <div class="rdr-endbox">
+              <span>
+                Nothing unread.
+                <%= last_poll ? "Last poll #{rdr_time(last_poll)}" : "Not polled yet" %><%= " · next in #{rdr_age(Time.current, now: next_poll)}" if next_poll %>.
+              </span>
+              <%= button_to poll_path, class: "r-btn", form: { class: "contents", data: { turbo_frame: "_top" } }, data: { reader_key: "r" } do %>
+                <span class="r-key">R</span> Poll now
+              <% end %>
+            </div>
+          </section>
+        <% end %>
+        <section>
+          <span class="r-label">Keys · Reader</span>
+          <dl class="rdr-keys-grid">
+            <dt>J / K</dt><dd>Next / previous item</dd>
+            <dt>U</dt><dd>Toggle read / unread</dd>
+            <dt>M</dt><dd>Mark (highlight) item</dd>
+            <dt>V</dt><dd>Open original in new tab</dd>
+            <dt>/</dt><dd>Find in article</dd>
+            <dt>N / SHIFT+N</dt><dd>Next / previous match</dd>
+            <dt>T</dt><dd>Text settings bar</dd>
+            <dt>I</dt><dd>Expand / collapse details</dd>
+            <dt>SPACE / SHIFT+SPACE</dt><dd>Page down / up</dd>
+            <dt>C</dt><dd>Copy the focused code block</dd>
+            <dt>ESC</dt><dd>Close innermost bar, then back</dd>
+          </dl>
+        </section>
+      </div>
+    </div>
+    <div class="rdr-statusline"><span>—</span><span>—</span></div>
+  </div>
+</turbo-frame>

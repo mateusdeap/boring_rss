@@ -1,14 +1,15 @@
 class FeedsController < ApplicationController
   include FeedTreeStreams
+  include ItemList
 
   def index
   end
 
+  # Renders into the current_feed frame, or — loaded as its own URL (the
+  # tree's links advance the address bar) — the whole app on the ITEMS
+  # screen.
   def show
-    @feed = Current.user.feeds.find(params[:id])
-    @unread_count = @feed.unread_count
-    @items = @feed.items.order(published_at: :desc)
-    @items = @items.unread if Current.user.unread_only?
+    load_item_list(Current.user.feeds.find(params[:id]))
   end
 
   def new

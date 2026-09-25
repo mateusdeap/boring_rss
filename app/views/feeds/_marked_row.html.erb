@@ -5,7 +5,7 @@
 <% count = user.items.marked.count %>
 <li id="marked_view" role="treeitem" aria-selected="false" tabindex="-1" class="rdr-marked-row">
   <span></span>
-  <%= link_to "Marked", marked_items_path, data: { turbo_frame: "current_feed" }, class: "r-name", tabindex: -1 %>
+  <%= link_to "Marked", marked_items_path, data: { turbo_frame: "current_feed", turbo_action: "advance" }, class: "r-name", tabindex: -1 %>
   <span></span>
   <span class="r-count <%= count.zero? ? "r-count-0" : "rdr-count-mark" %>"><%= rdr_number(count) %></span>
 </li>

@@ -1,0 +1,25 @@
+<turbo-frame id="current_feed" data-action="turbo:frame-render->selection#feedNavigated">
+  <div class="r-panel-h">
+    <%= link_to "← FEEDS", root_path, class: "rdr-phone-back", data: { turbo_frame: "_top", reader_back: "items" } %>
+    <span class="truncate">02 ITEMS — MARKED</span>
+    <span class="r-label rdr-keys-hint"><span class="r-key">J</span> <span class="r-key">K</span> Open · <span class="r-key">M</span> Unmark</span>
+  </div>
+  <div class="rdr-toolbar">
+    <span class="r-label">
+      <%= rdr_number(@items.size) %> marked across <%= pluralize(@items.map(&:feed_id).uniq.size, "feed") %>
+    </span>
+    <span class="r-label ml-auto">Unmarked items stay until reload — <span class="r-key">M</span> re-marks</span>
+  </div>
+  <div class="rdr-pane-scroll">
+    <table class="r-table" role="grid">
+      <colgroup><col style="width:24px"><col><col style="width:136px"><col style="width:72px"></colgroup>
+      <thead><tr><th></th><th>Title</th><th>Feed</th><th class="r-num">Age</th></tr></thead>
+      <tbody id="items" data-tree-row="marked_view">
+        <%= render partial: "items/list_item", collection: @items, as: :item %>
+      </tbody>
+    </table>
+    <% if @items.none? %>
+      <p class="r-empty">No marked items. Press <span class="r-key">M</span> on any item to mark it.</p>
+    <% end %>
+  </div>
+</turbo-frame>

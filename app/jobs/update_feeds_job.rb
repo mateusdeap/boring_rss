@@ -19,8 +19,10 @@ class UpdateFeedsJob < ApplicationJob
     "URL" => [ FeedFetcher::UnsupportedURL ]
   }.freeze
 
-  def perform
-    Feed.includes(:user).find_each { |feed| poll(feed) }
+  # user_id: poll only that user's feeds (PollsController, [R] POLL NOW).
+  def perform(user_id: nil)
+    feeds = user_id ? Feed.where(user_id:) : Feed.all
+    feeds.includes(:user).find_each { |feed| poll(feed) }
     FetchEvent.prune
   end
 

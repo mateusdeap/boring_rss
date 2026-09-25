@@ -7,7 +7,10 @@ class InitializeItems
     @parsed_entries.map do |entry|
       Item.new(
         title: entry.title,
-        summary: entry.summary,
+        summary: entry.body.html,
+        content_kind: entry.body.kind,
+        content_source: entry.body.source,
+        author: entry.author,
         link: entry.link,
         guid: entry.guid,
         published_at: entry.published_at

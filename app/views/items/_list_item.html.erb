@@ -7,7 +7,7 @@
     data-mark-url="<%= item_mark_path(item) %>" data-marked="<%= item.marked? %>">
   <td><% unless item.read? %><span class="r-dot" aria-label="Unread"></span><% end %></td>
   <td class="r-title">
-    <%= link_to item_path(item), data: { turbo_frame: "current_item", turbo_prefetch: false } do %>
+    <%= link_to item_path(item), data: { turbo_frame: "current_item", turbo_action: "advance", turbo_prefetch: false } do %>
       <span><%= item.title %></span><% if item.marked? %><span class="sr-only"> (marked)</span><% end %>
     <% end %>
   </td>

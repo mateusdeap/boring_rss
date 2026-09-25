@@ -32,4 +32,19 @@ class PreferencesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to new_session_path
   end
+
+  test "saves the reader's text settings and details state in the background" do
+    patch preferences_path, params: { user: { reader_text_size: 18, reader_measure: 60, reader_details_expanded: false } }, as: :json
+
+    assert_response :no_content
+    user = users(:one).reload
+    assert_equal [ 18, 60, false ], [ user.reader_text_size, user.reader_measure, user.reader_details_expanded ]
+  end
+
+  test "rejects a text size or measure the reader doesn't offer" do
+    patch preferences_path, params: { user: { reader_text_size: 40, reader_measure: 99 } }, as: :json
+
+    assert_response :unprocessable_content
+    assert_equal 16, users(:one).reload.reader_text_size
+  end
 end

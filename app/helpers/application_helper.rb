@@ -47,6 +47,15 @@ module ApplicationHelper
     number_with_delimiter(number, delimiter: THIN_SPACE)
   end
 
+  # When the recurring UpdateFeedsJob runs next (config/recurring.yml), or
+  # nil where it isn't scheduled (production polls some other way) or the
+  # queue database isn't there.
+  def next_poll_at
+    SolidQueue::RecurringTask.find_by(key: "update_feeds")&.next_time
+  rescue ActiveRecord::ActiveRecordError
+    nil
+  end
+
   # Sizes in kB/MB, base 1000.
   def rdr_bytes(bytes)
     if bytes < 1_000

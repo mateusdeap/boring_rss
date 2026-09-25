@@ -43,4 +43,40 @@ class ItemTest < ActiveSupport::TestCase
       item.mark_read!
     end
   end
+
+  test "counts words, images and links when the body is saved" do
+    item = Item.create!(feed: feeds(:one), title: "t", link: "l",
+                        summary: %(<p>Three short words <a href="https://example.com">here</a></p><img src="a.png"><img src="b.png">))
+
+    assert_equal [ 4, 2, 1 ], [ item.word_count, item.image_count, item.link_count ]
+  end
+
+  test "tracking pixels don't count as images" do
+    item = Item.create!(feed: feeds(:one), title: "t", link: "l", summary: %(<img src="a.png"><img src="t.gif" width="1" height="1">))
+
+    assert_equal 1, item.image_count
+  end
+
+  test "reading_minutes is the word count at 200 wpm, at least a minute for any words" do
+    assert_equal 0, Item.new(word_count: 0).reading_minutes
+    assert_equal 1, Item.new(word_count: 20).reading_minutes
+    assert_equal 6, Item.new(word_count: 1240).reading_minutes
+  end
+
+  test "mark_unread! flips read to false and enqueues broadcasts" do
+    item = items(:one)
+    item.update!(read: true)
+
+    assert_enqueued_with(job: Turbo::Streams::ActionBroadcastJob) do
+      item.mark_unread!
+    end
+
+    assert_not item.reload.read?
+  end
+
+  test "mark_unread! is a no-op when already unread" do
+    assert_no_enqueued_jobs do
+      items(:one).mark_unread!
+    end
+  end
 end

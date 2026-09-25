@@ -1,23 +1,32 @@
-<%# Every shortcut selection_controller.js handles. Keep the two in step. %>
+<%# Every shortcut selection_controller.js and reader_keys_controller.js
+    handle. Keep them in step (and the reader's own list in
+    items/_no_selection.html.erb). %>
 <dialog id="keys-dialog" class="r-dialog">
   <div class="r-panel-h">KEYS</div>
   <div class="r-stack r-pad">
     <table class="r-table">
-      <colgroup><col style="width:96px"><col></colgroup>
+      <colgroup><col style="width:120px"><col></colgroup>
       <thead><tr><th>Key</th><th>Action</th></tr></thead>
       <tbody>
-        <tr><td><span class="r-key">J</span> <span class="r-key">K</span></td><td>Next / previous item</td></tr>
-        <tr><td><span class="r-key">↵</span></td><td>Open item — marks it read</td></tr>
-        <tr><td><span class="r-key">O</span></td><td>Open original page ↗</td></tr>
-        <tr><td><span class="r-key">M</span></td><td>Mark / unmark item</td></tr>
-        <tr><td><span class="r-key">U</span></td><td>Show unread items only / all items</td></tr>
+        <tr><td><span class="r-key">J</span> <span class="r-key">K</span></td><td>Next / previous item — opening marks it read</td></tr>
+        <tr><td><span class="r-key">U</span></td><td>Toggle read / unread</td></tr>
+        <tr><td><span class="r-key">M</span></td><td>Mark (highlight) item</td></tr>
+        <tr><td><span class="r-key">V</span></td><td>Open original in a new tab ↗</td></tr>
+        <tr><td><span class="r-key">/</span></td><td>Find in article</td></tr>
+        <tr><td><span class="r-key">N</span> <span class="r-key">⇧N</span></td><td>Next / previous match (in the field: ↵ / ⇧↵)</td></tr>
+        <tr><td><span class="r-key">T</span></td><td>Text size and measure</td></tr>
+        <tr><td><span class="r-key">I</span></td><td>Expand / collapse details</td></tr>
+        <tr><td><span class="r-key">SPACE</span> <span class="r-key">⇧SPACE</span></td><td>Page down / up in the article</td></tr>
+        <tr><td><span class="r-key">C</span></td><td>Copy the focused code block</td></tr>
+        <tr><td><span class="r-key">R</span></td><td>Poll now (when nothing is unread)</td></tr>
+        <tr><td><span class="r-key">⇧U</span></td><td>Show unread items only / all items</td></tr>
         <tr><td><span class="r-key">⇧R</span></td><td>Mark all items in this feed read</td></tr>
         <tr><td><span class="r-key">↑</span> <span class="r-key">↓</span></td><td>Move in feed tree (when focused)</td></tr>
         <tr><td><span class="r-key">↵</span> <span class="r-key">→</span></td><td>Open feed · expand folder (in feed tree)</td></tr>
         <tr><td><span class="r-key">←</span></td><td>Collapse folder · go to parent folder</td></tr>
         <tr><td><span class="r-key">A</span></td><td>Add feed</td></tr>
         <tr><td><span class="r-key">L</span></td><td>Show / hide fetch log</td></tr>
-        <tr><td><span class="r-key">ESC</span></td><td>Close dialog · back to items (under 1100px)</td></tr>
+        <tr><td><span class="r-key">ESC</span></td><td>Close dialog · find bar · text bar, then back to items (under 1100px)</td></tr>
         <tr><td><span class="r-key">?</span></td><td>This list</td></tr>
       </tbody>
     </table>

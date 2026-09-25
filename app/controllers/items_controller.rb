@@ -1,4 +1,6 @@
 class ItemsController < ApplicationController
+  include ItemList
+
   before_action :set_item, only: %i[show edit update destroy]
 
   # GET /items or /items.json
@@ -6,9 +8,20 @@ class ItemsController < ApplicationController
     @items = Current.user.items
   end
 
-  # GET /items/1 or /items/1.json
+  # Opening an item marks it read (reading pane spec: read on open, [U]
+  # undoes it). Renders into the current_item frame, or — loaded as its own
+  # URL (item links advance the address bar) — the whole app with the
+  # item's feed listed and the item open.
+  # TODO: still a side effect on GET — see "Known deferred fixes" in CLAUDE.md.
   def show
     @item.mark_read!
+    load_item_list(@item.feed) unless turbo_frame_request?
+  end
+
+  # GET /items/first_unread — the newest unread item across every feed.
+  def first_unread
+    item = Current.user.items.unread.order(published_at: :desc).first
+    redirect_to item || root_path
   end
 
   # GET /items/new
