@@ -8,7 +8,7 @@ import { savePreferences } from "lib/preferences"
 // clicks, so clicking dead space in a row never marks it selected without
 // the pane actually changing.
 //
-// Also owns `data-screen` on the pane grid (feeds / items / reader): which
+// Also owns `data-screen` on the pane grid (tree / items / reader): which
 // pane is in front where they don't all fit (see .rdr-panes in
 // application.css). A feed loading shows the items, an item loading shows
 // the reader; the back links (ESC ← 02 ITEMS, ← ITEMS, ← FEEDS) are real
@@ -293,7 +293,21 @@ export default class extends Controller {
     if (log) log.open = !log.open
   }
 
+  // Rows streamed in (a new item, a read-state replace) carry the generic
+  // /items/:id link, since a broadcast can't know which list shows them;
+  // point them at the item within this list (#items[data-item-path]).
+  rescopeItemLinks() {
+    const list = this.element.querySelector("#items")
+    const template = list?.dataset.itemPath
+    if (!template) return
+
+    list.querySelectorAll("tr[id^='item_'] .r-title a").forEach((link) => {
+      link.setAttribute("href", template.replace("ITEM_ID", link.closest("tr").id.slice("item_".length)))
+    })
+  }
+
   applySelection() {
+    this.rescopeItemLinks()
     this.element.querySelectorAll("[aria-selected='true']").forEach((el) => {
       el.setAttribute("aria-selected", "false")
       el.classList.remove("is-focused")
@@ -305,10 +319,11 @@ export default class extends Controller {
     this.updateReaderPosition()
   }
 
-  // The reader header's "ITEM 3 / 7 · 5 unread" (wide) and "Field Notes ·
-  // 3 / 7" (narrow, phone), from the list on screen; and its back links,
-  // which return to that list (a feed or the Marked view) rather than
-  // always the item's own feed.
+  // The reader header's position, from the list on screen: in a feed
+  // "ITEM 3 / 7 · 5 unread" (wide) and "Field Notes · 3 / 7" (narrow,
+  // phone); in a group or Marked "Engineering · 7 / 21" at every width.
+  // And its back links, which return to that list rather than always the
+  // item's own feed.
   updateReaderPosition() {
     const reader = this.element.querySelector(".rdr-reader[data-item-id]")
     if (!reader) return
@@ -317,14 +332,13 @@ export default class extends Controller {
     const row = document.getElementById(`item_${reader.dataset.itemId}`)
     const index = rows.indexOf(row)
     if (index !== -1) {
+      const list = this.element.querySelector("#items")
       const unread = rows.filter((tr) => tr.classList.contains("is-unread")).length
-      const feed = row.querySelector(".r-feed")?.textContent.trim()
+      const position = `${list.dataset.listName} · ${index + 1} / ${rows.length}`
       reader.querySelectorAll("[data-reader-position='wide']").forEach((el) => {
-        el.textContent = `ITEM ${index + 1} / ${rows.length} · ${unread} unread`
+        el.textContent = list.dataset.listKind === "feed" ? `ITEM ${index + 1} / ${rows.length} · ${unread} unread` : position
       })
-      reader.querySelectorAll("[data-reader-position='narrow']").forEach((el) => {
-        el.textContent = `${feed} · ${index + 1} / ${rows.length}`
-      })
+      reader.querySelectorAll("[data-reader-position='narrow']").forEach((el) => { el.textContent = position })
     }
 
     const listUrl = this.element.querySelector("#current_feed")?.getAttribute("src")

@@ -184,7 +184,7 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
   test "index shows the unread count and the first-unread action when nothing is open" do
     get feeds_url
 
-    assert_select ".rdr-panes[data-screen=feeds]"
+    assert_select ".rdr-panes[data-screen=tree]"
     assert_select "#current_item", text: /1 unread in 1 feed/
     assert_select "a[data-open-first-unread][href='#{first_unread_items_path}']"
   end

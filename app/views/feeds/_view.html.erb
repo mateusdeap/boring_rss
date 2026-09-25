@@ -48,7 +48,8 @@
 </dl>
 
 <div class="rdr-pane-scroll">
-  <%= render "items/table", items: @items, source: "author", tree_row: dom_id(@feed), sort: "time", feeds: [ @feed ] %>
+  <%= render "items/table", items: @items, source: "author", tree_row: dom_id(@feed), sort: "time", feeds: [ @feed ],
+             item_path_template: feed_item_path(@feed, "ITEM_ID"), list_name: @feed.title, list_kind: "feed" %>
   <% if @items.none? %>
     <p class="r-empty">
       <% if Current.user.unread_only? && @feed.items.any? %>

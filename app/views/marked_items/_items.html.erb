@@ -1,6 +1,6 @@
 <turbo-frame id="current_feed" data-action="turbo:frame-render->selection#feedNavigated">
   <div class="r-panel-h">
-    <%= link_to "← FEEDS", root_path, class: "rdr-phone-back", data: { turbo_frame: "_top", reader_back: "items" } %>
+    <%= link_to "← GROUPS", root_path, class: "rdr-phone-back", data: { turbo_frame: "_top", reader_back: "items" } %>
     <span class="truncate">02 ITEMS — MARKED</span>
     <span class="r-label rdr-keys-hint"><span class="r-key">J</span> <span class="r-key">K</span> Open · <span class="r-key">M</span> Unmark</span>
   </div>
@@ -12,7 +12,8 @@
   </div>
   <div class="rdr-pane-scroll">
     <%# No data-feed-ids: new items aren't marked, so none land here. %>
-    <%= render "items/table", items: @items, source: "feed", tree_row: "marked_view", sort: "time", feeds: [] %>
+    <%= render "items/table", items: @items, source: "feed", tree_row: "marked_view", sort: "time", feeds: [],
+               item_path_template: marked_item_path("ITEM_ID"), list_name: "Marked", list_kind: "marked" %>
     <% if @items.none? %>
       <p class="r-empty">No marked items. Press <span class="r-key">M</span> on any item to mark it.</p>
     <% end %>

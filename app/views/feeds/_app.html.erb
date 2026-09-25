@@ -1,12 +1,14 @@
 <%# The app: feed tree, item list, reader. Every screen has its own URL —
-    `/`, `/feeds/:id`, `/marked`, `/items/:id` — each rendering this whole
+    `/`, `/groups/:id`, `/feeds/:id`, `/marked`, and an item within each
+    (`/groups/:group_id/items/:id`, …) — each rendering this whole
     shell with its own panes filled in, so reloads and the browser's back
     button land where you were on every layout. Tree and item links load
     into the frames and advance the address bar (data-turbo-action).
 
-    data-screen (feeds / items / reader) is which pane is in front where
+    data-screen (tree / items / reader) is which pane is in front where
     they don't all fit: under 1100px the reader replaces the item list,
-    under 640px one pane shows at a time (Feeds → Items → Reader).
+    under 640px one pane shows at a time (Groups → Items → Reader, with
+    Feeds opened from the Groups top bar).
     selection_controller.js moves it as frames load and on back.
 
     Keys: reader_keys_controller.js listens on the document and
@@ -31,6 +33,9 @@
     <div class="r-panel-h">
       <span><span class="rdr-mode-groups">01 GROUPS</span><span class="rdr-mode-feeds">01 FEEDS</span></span>
       <span class="r-label"><span class="rdr-mode-feeds"><span data-tree-summary="feeds">0</span> feeds · </span><span data-tree-summary="unread">0</span> unread</span>
+      <%# Phone (< 640px): the top bar opens Feeds from Groups and back. %>
+      <button type="button" class="rdr-phone-mode rdr-mode-groups" data-action="selection#showFeeds">Feeds →</button>
+      <button type="button" class="rdr-phone-mode rdr-mode-feeds" data-action="selection#showGroups">← Groups</button>
     </div>
     <div class="r-modebar">
       <div class="r-seg" role="group" aria-label="Left pane">

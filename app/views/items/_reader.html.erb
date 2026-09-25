@@ -13,11 +13,16 @@
     these through reader:* events and the data-reader-key buttons, so
     every shortcut is also a printed control.
 
-    The header's position ("ITEM 3 / 7 · 5 unread") is filled in by
+    The header's position ("ITEM 3 / 7 · 5 unread" in a feed,
+    "Engineering · 7 / 21" in a group or Marked) is filled in by
     selection_controller.js from the item list; the server only knows the
-    feed. %>
+    list's name. %>
 <% user = Current.user %>
 <% feed = item.feed %>
+<%# The list the item is open in (ItemsController#set_list): back links
+    return to it. %>
+<% list_path = @list_path || feed_path(feed) %>
+<% list_name = @list.is_a?(Group) ? @list.name : (@list == :marked ? "Marked" : feed.title) %>
 <% safe_link = safe_item_link(item.link) %>
 <% host = safe_link && link_host(safe_link) %>
 <% content = reader_content(item) unless item.content_empty? %>
@@ -34,23 +39,23 @@
   <%# Pane header. The back link shows under 1100px only. %>
   <div class="r-panel-h rdr-reader-h">
     <span class="rdr-reader-h-left">
-      <%= link_to feed_path(feed), class: "rdr-back", data: { turbo_frame: "current_feed", turbo_action: "advance", reader_back: "reader" } do %>
+      <%= link_to list_path, class: "rdr-back", data: { turbo_frame: "current_feed", turbo_action: "advance", reader_back: "reader" } do %>
         <span class="r-key">ESC</span> ← 02 ITEMS
       <% end %>
       03 READER
     </span>
     <span class="rdr-reader-pos r-dim">
-      <span class="rdr-pos-wide" data-reader-position="wide"><%= feed.title %></span>
-      <span class="rdr-pos-narrow" data-reader-position="narrow"><%= feed.title %></span>
+      <span class="rdr-pos-wide" data-reader-position="wide"><%= list_name %></span>
+      <span class="rdr-pos-narrow" data-reader-position="narrow"><%= list_name %></span>
     </span>
   </div>
 
   <%# Phone top bar (< 640px). %>
   <div class="rdr-phone-top">
-    <%= link_to "← ITEMS", feed_path(feed), class: "rdr-phone-top-btn", data: { turbo_frame: "current_feed", turbo_action: "advance", reader_back: "reader" } %>
+    <%= link_to "← ITEMS", list_path, class: "rdr-phone-top-btn", data: { turbo_frame: "current_feed", turbo_action: "advance", reader_back: "reader" } %>
     <div class="rdr-phone-top-title">
       <span>03 READER</span>
-      <span class="r-dim truncate" data-reader-position="narrow"><%= feed.title %></span>
+      <span class="r-dim truncate" data-reader-position="narrow"><%= list_name %></span>
     </div>
     <% if safe_link %>
       <%= link_to "OPEN ↗", safe_link, class: "rdr-phone-top-btn", target: "_blank", rel: "noopener" %>

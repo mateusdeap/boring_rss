@@ -39,7 +39,8 @@
     <% end %>
   </div>
   <div class="rdr-pane-scroll">
-    <%= render "items/table", items: @items, source: "feed", tree_row: @group.dom_id, sort: @sort, feeds: @feeds %>
+    <%= render "items/table", items: @items, source: "feed", tree_row: @group.dom_id, sort: @sort, feeds: @feeds,
+               item_path_template: group_item_path(@group, "ITEM_ID"), list_name: @group.name, list_kind: "group" %>
     <% if @feeds.empty? %>
       <p class="r-empty">No feeds in <%= @group.name %>. <span class="r-key">A</span> adds one.</p>
     <% elsif @items.none? && @sort == "time" %>

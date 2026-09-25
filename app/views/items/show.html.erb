@@ -2,5 +2,11 @@
 <% if turbo_frame_request? %>
   <%= reader %>
 <% else %>
-  <%= render "feeds/app", screen: "reader", items_frame: render("feeds/items"), reader_frame: reader %>
+  <% items_frame, tree_mode =
+       case @list
+       when Group then [ render("groups/items"), "groups" ]
+       when Feed then [ render("feeds/items"), "feeds" ]
+       else [ render("marked_items/items"), nil ]
+       end %>
+  <%= render "feeds/app", screen: "reader", items_frame:, reader_frame: reader, tree_mode: %>
 <% end %>

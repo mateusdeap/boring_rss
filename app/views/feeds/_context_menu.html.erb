@@ -3,7 +3,7 @@
     points the links and dialogs at that record. %>
 <div id="context-menu" data-context-menu-target="menu" class="hidden" role="menu">
   <div data-context-menu-target="feedItems">
-    <button type="button" role="menuitem" data-action="context-menu#moveFeed">Move to folder…</button>
+    <button type="button" role="menuitem" data-action="context-menu#moveFeed">Move to group…</button>
     <%= link_to "Delete feed", "#", role: "menuitem", data: {
       context_menu_target: "deleteFeedLink",
       turbo_confirm: "Delete this feed and all its items?",
@@ -11,10 +11,10 @@
     } %>
   </div>
   <div data-context-menu-target="folderItems">
-    <button type="button" role="menuitem" data-action="context-menu#renameFolder">Rename folder…</button>
-    <%= link_to "Delete folder", "#", role: "menuitem", data: {
+    <button type="button" role="menuitem" data-action="context-menu#renameFolder">Rename group…</button>
+    <%= link_to "Delete group", "#", role: "menuitem", data: {
       context_menu_target: "deleteFolderLink",
-      turbo_confirm: "Delete this folder? Its feeds move to the top level.",
+      turbo_confirm: "Delete this group? Its feeds move to Ungrouped.",
       turbo_method: :delete
     } %>
   </div>

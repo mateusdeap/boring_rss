@@ -9,19 +9,28 @@ class ItemsController < ApplicationController
   end
 
   # Opening an item marks it read (reading pane spec: read on open, [U]
-  # undoes it). Renders into the current_item frame, or — loaded as its own
-  # URL (item links advance the address bar) — the whole app with the
-  # item's feed listed and the item open.
+  # undoes it). The item is open within a list, which its URL names:
+  # /groups/:group_id/items/:id, /feeds/:feed_id/items/:id,
+  # /marked/items/:id, or /items/:id for its own feed. Renders into the
+  # current_item frame, or — loaded as its own URL (item links advance the
+  # address bar) — the whole app with that list and the item open.
   # TODO: still a side effect on GET — see "Known deferred fixes" in CLAUDE.md.
   def show
+    set_list
     @item.mark_read!
-    load_item_list(@item.feed) unless turbo_frame_request?
+    return if turbo_frame_request?
+
+    case @list
+    when Group then load_group_list(@list)
+    when Feed then load_item_list(@list)
+    else @items = Current.user.items.marked.includes(:feed).order(published_at: :desc)
+    end
   end
 
   # GET /items/first_unread — the newest unread item across every feed.
   def first_unread
     item = Current.user.items.unread.order(published_at: :desc).first
-    redirect_to item || root_path
+    redirect_to item ? feed_item_path(item.feed, item) : root_path
   end
 
   # GET /items/new
@@ -72,6 +81,24 @@ class ItemsController < ApplicationController
   end
 
   private
+
+  # The list the item is open in: @list (a Group, a Feed, or :marked) and
+  # @list_path, where the reader's back links go. An item outside the list
+  # its URL names is not found there.
+  def set_list
+    if params[:group_id]
+      @list = Group.find(Current.user, params[:group_id])
+      raise ActiveRecord::RecordNotFound unless @list.items.exists?(@item.id)
+      @list_path = group_path(@list)
+    elsif request.path.start_with?("/marked/")
+      @list = :marked
+      @list_path = marked_items_path
+    else
+      @list = params[:feed_id] ? Current.user.feeds.find(params[:feed_id]) : @item.feed
+      raise ActiveRecord::RecordNotFound unless @list == @item.feed
+      @list_path = feed_path(@list)
+    end
+  end
 
   # Use callbacks to share common setup or constraints between actions.
   def set_item

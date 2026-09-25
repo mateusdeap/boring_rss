@@ -207,7 +207,7 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
 
     get first_unread_items_url
 
-    assert_redirected_to item_url(newer)
+    assert_redirected_to feed_item_url(newer.feed, newer)
   end
 
   test "first_unread goes home when nothing is unread" do
@@ -216,5 +216,52 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     get first_unread_items_url
 
     assert_redirected_to root_url
+  end
+
+  test "an item opens within a group: that river listed, Groups mode, back links to the group" do
+    feeds(:one).update!(folder: folders(:tech))
+
+    get group_item_url(folders(:tech), @item)
+
+    assert_select ".rdr-panes[data-screen=reader]"
+    assert_select ".rdr-pane-tree[data-tree-mode=groups]"
+    assert_select "#items[data-tree-row=group_#{folders(:tech).id}][data-list-kind=group][data-list-name=Tech]"
+    assert_select "#items[data-item-path='#{group_item_path(folders(:tech), "ITEM_ID")}']"
+    assert_select "#item_#{@item.id} .r-title a[href='#{group_item_path(folders(:tech), @item)}']"
+    assert_select ".rdr-reader a.rdr-back[href='#{group_path(folders(:tech))}']"
+    assert_select ".rdr-reader [data-reader-position=narrow]", text: "Tech"
+    assert @item.reload.read?
+  end
+
+  test "an item opens within All feeds, its feed (Feeds mode), or Marked" do
+    get group_item_url("all", @item)
+    assert_select "#items[data-tree-row=group_all]"
+
+    get feed_item_url(@item.feed, @item)
+    assert_select ".rdr-pane-tree[data-tree-mode=feeds]"
+    assert_select "#items[data-tree-row=feed_#{@item.feed_id}][data-list-kind=feed]"
+
+    @item.update!(marked: true)
+    get marked_item_url(@item)
+    assert_select "#items[data-tree-row=marked_view][data-list-kind=marked]"
+    assert_select ".rdr-reader a.rdr-back[href='#{marked_items_path}']"
+  end
+
+  test "an item outside the list its URL names is not found there" do
+    other_feed = users(:one).feeds.create!(title: "Other", link: "https://o.example.com", feed_url: "https://o.example.com/rss")
+
+    get feed_item_url(other_feed, @item)
+    assert_response :not_found
+
+    get group_item_url("ungrouped", @item.tap { @item.feed.update!(folder: folders(:tech)) })
+    assert_response :not_found
+    assert_not @item.reload.read?
+  end
+
+  test "inside the reader frame, a scoped item renders just the reader with the list's back link" do
+    get group_item_url("all", @item), headers: { "Turbo-Frame" => "current_item" }
+
+    assert_select ".rdr-panes", count: 0
+    assert_select ".rdr-reader a.rdr-back[href='#{group_path("all")}']"
   end
 end
