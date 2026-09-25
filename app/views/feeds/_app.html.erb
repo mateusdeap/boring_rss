@@ -42,8 +42,6 @@
         <button type="button" class="r-btn" data-tree-mode-button="groups" aria-pressed="<%= tree_mode == "groups" %>" data-action="selection#showGroups"><span class="r-key">G</span> Groups</button>
         <button type="button" class="r-btn" data-tree-mode-button="feeds" aria-pressed="<%= tree_mode == "feeds" %>" data-action="selection#showFeeds"><span class="r-key">F</span> Feeds</button>
       </div>
-      <span class="rdr-grow"></span>
-      <button class="r-btn" command="show-modal" commandfor="add-feed-dialog"><span class="r-key">A</span> Add feed</button>
     </div>
     <div class="rdr-pane-scroll">
       <ul class="r-tree rdr-mode-groups" role="tree" aria-label="Groups" id="groups" data-action="keydown->selection#treeKey">
@@ -55,6 +53,11 @@
       <ul class="r-tree rdr-marked-list" role="tree" aria-label="Marked" data-action="keydown->selection#treeKey">
         <%= render "feeds/marked_row", user: Current.user %>
       </ul>
+    </div>
+    <%# Pane footer (canvas ModeFeeds): Add feed, in both modes — the mode
+        bar holds only the G / F control, which fills the 248px pane. %>
+    <div class="rdr-tree-foot">
+      <button type="button" class="rdr-text-btn" command="show-modal" commandfor="add-feed-dialog"><span class="r-key">A</span> Add feed</button>
     </div>
   </section>
 

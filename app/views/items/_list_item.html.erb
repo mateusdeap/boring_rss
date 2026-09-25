@@ -15,6 +15,6 @@
   </td>
   <td class="r-feed r-2"><%= item.feed.title %></td>
   <td class="r-author r-2"><%= item.author.presence || "—" %></td>
-  <td class="r-num r-dim"><%= rdr_number(item.word_count) %></td>
+  <td class="r-num r-dim rdr-col-words"><%= rdr_number(item.word_count) %></td>
   <td class="r-num r-dim"><%= rdr_age_tag(item.published_at) if item.published_at %></td>
 </tr>

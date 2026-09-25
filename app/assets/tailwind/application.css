@@ -366,6 +366,7 @@ body[data-theme="dark"] {
   .rdr-pane-tree[data-tree-mode="groups"] .rdr-mode-feeds,
   .rdr-pane-tree[data-tree-mode="feeds"] .rdr-mode-groups { display: none; }
   .r-modebar { flex-shrink: 0; }
+  .rdr-tree-foot { display: flex; align-items: center; gap: 4px; flex-shrink: 0; height: var(--row); padding: 0 12px; border-top: var(--hairline) solid var(--color-rule); color: var(--color-ink-3); white-space: nowrap; overflow: hidden; }
 
   /* Marked view row: last in the pane, under both lists, set off by a
      strong rule; its count is ink on mark (RDR-01: only ink sits on mark). */
@@ -564,19 +565,27 @@ body[data-theme="dark"] {
     .rdr-shell:has(.rdr-panes:not([data-screen="tree"])) > .r-status { display: none; }
 
     /* Groups / Feeds: the top bar switches modes (a 44px button in place
-       of the header counts); the mode bar is left with Add feed, in Feeds. */
+       of the header counts and the mode bar). */
     .rdr-pane-tree .r-panel-h { height: 44px; padding-right: 0; }
-    .rdr-pane-tree .r-panel-h .r-label, .r-modebar .r-seg { display: none; }
-    .rdr-pane-tree[data-tree-mode="groups"] .r-modebar { display: none; }
+    .rdr-pane-tree .r-panel-h .r-label, .rdr-pane-tree .r-modebar { display: none; }
+    .rdr-tree-foot { height: 44px; }
     .rdr-pane-tree[data-tree-mode="groups"] .rdr-phone-mode.rdr-mode-groups,
     .rdr-pane-tree[data-tree-mode="feeds"] .rdr-phone-mode.rdr-mode-feeds { display: flex; }
     .rdr-phone-mode { align-items: center; align-self: stretch; padding: 0 16px; border: 0; border-left: var(--hairline) solid var(--color-rule-strong); background: none; color: var(--color-ink); font: 500 12px/16px var(--font-mono); text-transform: uppercase; cursor: pointer; }
 
     .rdr-phone-back { display: flex; align-items: center; align-self: stretch; margin-left: -8px; padding: 0 12px; border-right: var(--hairline) solid var(--color-rule-strong); font: 500 12px/16px var(--font-mono); color: inherit; text-decoration: none; }
     .rdr-pane-items .r-panel-h { height: 44px; }
+    /* Title gets the width: the header counts, the source and words
+       columns, and the log's size and duration give way — their <col>s
+       too, or the remaining cells would shift into them. Facts wrap. */
+    .rdr-pane-items .r-panel-h .r-label,
+    .rdr-pane-items :is(th, td).rdr-col-source, .rdr-pane-items .r-table .r-feed, .rdr-pane-items .r-table .r-author,
+    .rdr-pane-items :is(th, td).rdr-col-words,
+    .rdr-pane-items :is(th, td):is(.rdr-col-size, .rdr-col-took),
+    .rdr-pane-items col:is(.rdr-col-source, .rdr-col-words, .rdr-col-size, .rdr-col-took) { display: none; }
+    .rdr-pane-items .r-panel-h { justify-content: flex-start; }
+    .rdr-feed-facts dd { white-space: normal; overflow-wrap: anywhere; }
     .rdr-keys-hint, .rdr-pane-tree .r-key, .rdr-toolbar .r-key { display: none; }
-    .r-modebar { height: auto; padding-block: 4px; }
-    .r-modebar .r-btn { height: 44px; }
     .r-tree li, .r-table td, .rdr-toolbar .r-btn { height: 44px; }
     .r-tree li a { line-height: 44px; }
 
@@ -591,7 +600,7 @@ body[data-theme="dark"] {
     .rdr-statusline { padding-inline: 16px; }
     .rdr-statusline-hint, .rdr-statusline-inline { display: none; }
     .rdr-statusline-left { display: inline; }
-    .rdr-find-hint .r-key { display: none; }
+    .rdr-find-hint .r-key, .rdr-details .r-key { display: none; }
     .rdr-details-line { height: auto; padding-block: 8px; }
     .rdr-details-line-btn { flex-wrap: wrap; row-gap: 4px; }
     .rdr-details-summary { white-space: normal; }

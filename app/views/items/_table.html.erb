@@ -17,8 +17,8 @@
     sort "feed"; their ids go in data-feed-ids either way),
     item_path_template, list_name, list_kind ("feed" / "group" / "marked") %>
 <table class="r-table rdr-source-<%= source %>" role="grid">
-  <colgroup><col style="width:24px"><col><col style="width:128px"><col style="width:64px"><col style="width:64px"></colgroup>
-  <thead><tr><th></th><th>Title</th><th><%= source == "feed" ? "Feed" : "Author" %></th><th class="r-num">Words</th><th class="r-num">Age</th></tr></thead>
+  <colgroup><col style="width:24px"><col><col class="rdr-col-source" style="width:128px"><col class="rdr-col-words" style="width:64px"><col style="width:64px"></colgroup>
+  <thead><tr><th></th><th>Title</th><th class="rdr-col-source"><%= source == "feed" ? "Feed" : "Author" %></th><th class="r-num rdr-col-words">Words</th><th class="r-num">Age</th></tr></thead>
   <tbody id="items" data-tree-row="<%= tree_row %>" data-sort="<%= sort %>" data-feed-ids="<%= feeds.map(&:id).join(" ") %>"
          data-item-path="<%= item_path_template %>" data-list-name="<%= list_name %>" data-list-kind="<%= list_kind %>">
     <% if sort == "feed" %>

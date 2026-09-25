@@ -70,8 +70,8 @@
   </summary>
   <div class="rdr-log-scroll">
     <table class="r-table r-table-log">
-      <colgroup><col style="width:120px"><col style="width:88px"><col style="width:72px"><col style="width:72px"><col></colgroup>
-      <thead><tr><th>Time UTC</th><th>Result</th><th class="r-num">Size</th><th class="r-num">Took</th><th>Detail</th></tr></thead>
+      <colgroup><col style="width:120px"><col style="width:88px"><col class="rdr-col-size" style="width:72px"><col class="rdr-col-took" style="width:72px"><col></colgroup>
+      <thead><tr><th>Time UTC</th><th>Result</th><th class="r-num rdr-col-size">Size</th><th class="r-num rdr-col-took">Took</th><th>Detail</th></tr></thead>
       <tbody id="fetch_log">
         <%= render partial: "fetch_events/fetch_event", collection: events %>
       </tbody>
