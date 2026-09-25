@@ -12,4 +12,12 @@ module ItemList
     @items = feed.items.order(published_at: :desc)
     @items = @items.unread if Current.user.unread_only?
   end
+
+  # A group's merged river (Groups mode): every item of its feeds.
+  def load_group_list(group)
+    @group = group
+    @unread_count = group.unread_count
+    @items = group.items.includes(:feed).order(published_at: :desc)
+    @items = @items.unread if Current.user.unread_only?
+  end
 end

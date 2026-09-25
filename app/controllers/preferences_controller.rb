@@ -1,6 +1,7 @@
 class PreferencesController < ApplicationController
-  # Theme (status bar select), the unread-only filter (item table toolbar)
-  # and the reader's text size, measure and details state. The filter
+  # Theme (status bar select), the unread-only filter (item table toolbar),
+  # the left pane's mode and the reader's text size, measure and details
+  # state. The filter
   # button sits inside the current_feed turbo-frame, whose Referer is the
   # page, not the frame — so it passes return_to (the feed) explicitly;
   # url_from only accepts same-host URLs. The reader's settings are saved
@@ -19,6 +20,6 @@ class PreferencesController < ApplicationController
   private
 
   def preference_params
-    params.expect(user: [ :theme, :unread_only, :reader_text_size, :reader_measure, :reader_details_expanded ])
+    params.expect(user: [ :theme, :unread_only, :reader_text_size, :reader_measure, :reader_details_expanded, :tree_mode ])
   end
 end

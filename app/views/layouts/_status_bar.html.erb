@@ -1,4 +1,4 @@
-<%# RDR-01 StatusBar. The FEEDS/UNREAD/LAST/ERR cells are recomputed
+<%# RDR-01 StatusBar. The FEEDS/UNREAD/LAST/ERR/STALE cells are recomputed
     client-side by status_bar_controller.js from the feed tree's rows, which
     already update live over the user's own feeds stream (Feed#broadcast_row)
     — so the bar can never disagree with the tree and needs no broadcast of
@@ -10,7 +10,7 @@
     <div><span class="r-label">Feeds</span> <span data-status-bar-target="feeds">0</span></div>
     <div><span class="r-label">Unread</span> <span class="font-semibold text-signal" data-status-bar-target="unread">0</span></div>
     <div><span class="r-label">Last fetch</span> <span data-status-bar-target="last">—</span></div>
-    <div><span class="r-code r-code-idle" data-status-bar-target="errors">0 ERR</span></div>
+    <div><span class="r-code r-code-idle" data-status-bar-target="errors">0 ERR</span> <span class="r-code r-code-idle" data-status-bar-target="stale">0 STALE</span></div>
   <% end %>
   <div class="r-grow"></div>
   <% if authenticated? && content_for?(:app_shell) %>

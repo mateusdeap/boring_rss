@@ -1,0 +1,25 @@
+<%# RDR-01 FeedTree, Groups mode: name · health · unread count, no
+    disclosure. Health is the worst state across the group's feeds with a
+    count (1 ERR, 1 STALE, else OK) and is never hidden; when it isn't OK
+    it links to that first failing feed in Feeds mode (selection_controller.js
+    switches the mode when the feed view loads). Replaced live by
+    Group#broadcast_row, whose locals are user + group_key instead of a
+    Group (see there). %>
+<% group ||= Group.new(user, group_key) %>
+<% unread = group.unread_count %>
+<% health = group.health %>
+<li id="<%= group.dom_id %>" role="treeitem" aria-selected="false" tabindex="-1" data-group-key="<%= group.key %>"
+    class="<%= class_names("r-group", "r-all": group.all?, "has-unread": unread.positive?) %>">
+  <%= link_to group.name, group_path(group), data: { turbo_frame: "current_feed", turbo_action: "advance" }, class: "r-name", tabindex: -1 %>
+  <% if health.feed %>
+    <%= link_to feed_path(health.feed), class: "r-health", tabindex: -1, data: { turbo_frame: "current_feed", turbo_action: "advance" },
+          title: "#{health.feed.title}: #{health.tone == "fail" ? fetch_failure_summary(health.feed) : "no new items in #{rdr_age(health.feed.last_item_at)}"} — opens it in Feeds mode" do %>
+      <span class="r-code r-code-<%= health.tone %>"><%= health.label %></span>
+    <% end %>
+  <% elsif group.feeds.empty? %>
+    <span class="r-dim" title="No feeds">—</span>
+  <% else %>
+    <span class="r-code r-code-<%= health.tone %>" title="Every feed fetched without error and on schedule"><%= health.label %></span>
+  <% end %>
+  <span class="r-count<%= " r-count-0" if unread.zero? %>"><%= rdr_number(unread) %></span>
+</li>

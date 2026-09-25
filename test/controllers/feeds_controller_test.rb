@@ -125,12 +125,52 @@ class FeedsControllerTest < ActionDispatch::IntegrationTest
     assert_select "button[disabled]", text: /Mark all read — none unread/
   end
 
-  test "the tree starts with the Marked row and its count" do
+  test "the Marked row sits under both modes' lists, with its count" do
     items(:one).update!(marked: true)
 
     get feeds_url
 
-    assert_select "#feeds > li:first-child#marked_view .rdr-count-mark", text: "1"
+    assert_select ".rdr-pane-tree > .rdr-pane-scroll > ul:last-child > li#marked_view .rdr-count-mark", text: "1"
+  end
+
+  test "the left pane opens in the user's mode, Groups by default, with both lists rendered" do
+    get feeds_url
+
+    assert_select ".rdr-pane-tree[data-tree-mode=groups]"
+    assert_select "[data-tree-mode-button=groups][aria-pressed=true]", text: /G\s+Groups/
+    assert_select "[data-tree-mode-button=feeds][aria-pressed=false]", text: /F\s+Feeds/
+    assert_select "#groups li"
+    assert_select "#feeds li"
+
+    users(:one).update!(tree_mode: "feeds")
+    get feeds_url
+
+    assert_select ".rdr-pane-tree[data-tree-mode=feeds]"
+  end
+
+  test "Groups mode lists All feeds first, then folders, then Ungrouped" do
+    feeds(:one).update!(folder: folders(:tech))
+    users(:one).feeds.create!(title: "Loose", link: "https://loose.example.com", feed_url: "https://loose.example.com/rss")
+
+    get feeds_url
+
+    assert_equal [ "group_all", "group_#{folders(:tech).id}", "group_ungrouped" ], css_select("#groups > li").map { _1["id"] }
+    assert_select "#groups > li.r-group.r-all:first-child .r-name", text: "All feeds"
+  end
+
+  test "a group's failing health links to that feed" do
+    feeds(:one).update!(folder: folders(:tech), last_fetched_at: Time.current, last_fetch_error_at: Time.current, last_fetch_status: "503")
+
+    get feeds_url
+
+    assert_select "#group_#{folders(:tech).id} a.r-health[href='#{feed_path(feeds(:one))}'] .r-code-fail", text: "1 ERR"
+    assert_select "#group_all a.r-health .r-code-fail", text: "1 ERR"
+  end
+
+  test "a feed page opens the left pane in Feeds mode" do
+    get feed_url(feeds(:one))
+
+    assert_select ".rdr-pane-tree[data-tree-mode=feeds]"
   end
 
   test "loaded as its own URL, show renders the whole app on the items screen" do

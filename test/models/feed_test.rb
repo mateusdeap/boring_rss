@@ -16,7 +16,8 @@ class FeedTest < ActiveSupport::TestCase
     feed = feeds(:one)
 
     assert_difference -> { feed.fetch_events.count } do
-      assert_turbo_stream_broadcasts [ feed.user, :feeds ], count: 1 do
+      # The feed row, plus the Groups rows showing it: All feeds, Ungrouped.
+      assert_turbo_stream_broadcasts [ feed.user, :feeds ], count: 3 do
         feed.record_fetch!(status: "503", detail: "Service Unavailable", bytes: 120)
       end
     end
@@ -50,5 +51,43 @@ class FeedTest < ActiveSupport::TestCase
 
     assert_equal %("abc"), feed.etag
     assert_not feed.fetch_failed?
+  end
+
+  test "stale when the newest item is older than three usual gaps, and never before 14 days" do
+    feed = feeds(:one)
+    feed.update!(last_fetched_at: Time.current)
+
+    feed.update!(items_per_week: 7, last_item_at: 5.days.ago)
+    assert_not feed.stale?, "3 gaps is 3 days, but 14 days is the floor"
+    feed.update!(last_item_at: 15.days.ago)
+    assert feed.stale?
+    assert_equal "stale", feed.health
+
+    feed.update!(items_per_week: 0.5, last_item_at: 30.days.ago)
+    assert_not feed.stale?, "one item every two weeks: stale after six"
+    feed.update!(last_item_at: 43.days.ago)
+    assert feed.stale?
+
+    feed.update!(last_item_at: nil)
+    assert_not feed.stale?, "a feed with no items is never stale"
+  end
+
+  test "a failing feed reads as fail, not stale" do
+    feed = feeds(:one)
+    feed.update!(last_fetched_at: Time.current, last_fetch_error_at: Time.current, last_item_at: 1.year.ago)
+
+    assert_equal "fail", feed.health
+  end
+
+  test "refresh_volume! counts items per week over the last eight weeks and keeps the newest item's time" do
+    feed = feeds(:one)
+    feed.items.delete_all
+    16.times { |n| feed.items.create!(title: "Recent #{n}", published_at: (n * 3).days.ago) }
+    feed.items.create!(title: "Old", published_at: 100.days.ago)
+
+    feed.refresh_volume!
+
+    assert_in_delta 2.0, feed.items_per_week
+    assert_in_delta Time.current, feed.last_item_at, 1.minute
   end
 end

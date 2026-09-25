@@ -1,0 +1,4 @@
+<%# Groups mode's rows (RDR-01 FeedTree): All feeds, each folder, then
+    Ungrouped. Re-rendered with the Feeds tree by
+    FeedTreeStreams#tree_streams after any structural change. %>
+<%= render partial: "groups/group", collection: Group.for(user), as: :group %>

@@ -19,8 +19,8 @@ class Folder < ApplicationRecord
   end
 
   # RDR-01: "Folders show the worst health of their children."
-  def failing_feeds
-    feeds.select(&:fetch_failed?)
+  def health
+    Feed.health_summary(feeds.sort_by(&:id))
   end
 
   def last_fetched_at

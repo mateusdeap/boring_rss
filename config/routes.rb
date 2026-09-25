@@ -23,6 +23,8 @@ Rails.application.routes.draw do
     resource :reading, only: :create, module: :feeds
   end
   resources :folders, only: %i[ update destroy ]
+  # Groups mode's rivers: /groups/all, /groups/ungrouped, /groups/:folder_id.
+  resources :groups, only: :show
   # Every marked item across all feeds (the MARKED row atop the feed tree).
   get "marked", to: "marked_items#index", as: :marked_items
 end

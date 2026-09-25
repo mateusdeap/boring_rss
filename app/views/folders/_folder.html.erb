@@ -1,10 +1,10 @@
-<%# RDR-01 FeedTree folder row: disclosure · name · worst health of its
-    feeds · summed unread. Clicking (or Enter/←/→, selection_controller.js)
-    toggles it; the state is saved on the folder. No data-feed-id, so the
-    StatusBar doesn't count it twice. %>
+<%# RDR-01 FeedTree folder row (Feeds mode): disclosure · name · worst
+    health of its feeds (1 ERR, 1 STALE, else OK) · summed unread.
+    Clicking (or Enter/←/→, selection_controller.js) toggles it; the state
+    is saved on the folder. No data-feed-id, so the StatusBar doesn't count
+    it twice. %>
 <% unread = folder.unread_count %>
-<% failing = folder.failing_feeds %>
-<% last_fetched_at = folder.last_fetched_at %>
+<% health = folder.health %>
 <li id="<%= dom_id folder %>" role="treeitem" tabindex="-1"
     aria-expanded="<%= !folder.collapsed? %>"
     data-folder-id="<%= folder.id %>" data-folder-name="<%= folder.name %>"
@@ -12,12 +12,10 @@
     class="r-folder<%= " has-unread" if unread.positive? %>">
   <span aria-hidden="true" data-disclosure><%= folder.collapsed? ? "▸" : "▾" %></span>
   <span class="r-name"><%= folder.name %></span>
-  <% if failing.any? %>
-    <%= status_code_tag "#{failing.size} ERR", title: failing.map { |feed| "#{feed.title}: #{feed.last_fetch_status} #{feed.last_fetch_detail}" }.join("\n") %>
-  <% elsif last_fetched_at %>
-    <span class="r-dim" title="Newest fetch in this folder: <%= rdr_time(last_fetched_at) %>"><%= rdr_age(last_fetched_at) %></span>
+  <% if folder.feeds.empty? %>
+    <span class="r-dim" title="Empty folder">—</span>
   <% else %>
-    <span class="r-dim" title="<%= folder.feeds.empty? ? "Empty folder" : "Not fetched yet" %>">—</span>
+    <span class="r-code r-code-<%= health.tone %>" title="<%= (health.failing + health.stale).map { |feed| "#{feed.title}: #{feed.health.upcase}" }.join("\n").presence || "Every feed fetched without error and on schedule" %>"><%= health.label %></span>
   <% end %>
   <span class="r-count<%= " r-count-0" if unread.zero? %>"><%= rdr_number(unread) %></span>
 </li>

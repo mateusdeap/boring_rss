@@ -43,9 +43,11 @@ class Item < ApplicationRecord
     self.link_count = fragment.css("a[href]").size
   end
 
-  # Called from controller actions, hence the _later variants.
+  # Called from controller actions, hence the _later variants. The row goes
+  # to the owner's own stream, which the app shell subscribes to once, so
+  # it reaches whichever list shows it — a feed, a group's river, Marked.
   def broadcast_read_state
-    broadcast_replace_later_to feed, target: self, partial: "items/list_item", locals: { item: self }
+    broadcast_replace_later_to feed.user, :feeds, target: self, partial: "items/list_item", locals: { item: self }
     feed.broadcast_row_later
   end
 

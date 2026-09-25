@@ -10,4 +10,14 @@ module FeedsHelper
     since = feed.fetch_failures_count > 1 ? " (#{pluralize(feed.fetch_failures_count, "consecutive failure")})" : ""
     "ERR #{feed.last_fetch_status} #{feed.last_fetch_detail} — last attempt #{rdr_time(feed.last_fetch_error_at)}#{since}"
   end
+
+  # `~12 items / wk`, `<1 item / wk`, `0 items / wk` (RDR-01: units on every
+  # number).
+  def items_per_week_label(feed)
+    rate = feed.items_per_week
+    if rate.zero? then "0 items / wk"
+    elsif rate < 1 then "<1 item / wk"
+    else "~#{rdr_number(rate.round)} items / wk"
+    end
+  end
 end

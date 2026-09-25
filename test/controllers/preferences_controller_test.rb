@@ -19,6 +19,18 @@ class PreferencesControllerTest < ActionDispatch::IntegrationTest
     assert users(:one).reload.unread_only?
   end
 
+  test "saves the left pane's mode in the background, and rejects an unknown one" do
+    patch preferences_path, params: { user: { tree_mode: "feeds" } }, as: :json
+
+    assert_response :no_content
+    assert users(:one).reload.tree_mode_feeds?
+
+    patch preferences_path, params: { user: { tree_mode: "folders" } }, as: :json
+
+    assert_response :unprocessable_content
+    assert users(:one).reload.tree_mode_feeds?
+  end
+
   test "ignores an off-site return_to" do
     patch preferences_path, params: { user: { unread_only: "true" }, return_to: "https://evil.example.com/" }
 

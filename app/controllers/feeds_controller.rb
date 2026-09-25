@@ -26,6 +26,7 @@ class FeedsController < ApplicationController
     # generic `can't be blank`. Skip `save` entirely once that's happened;
     # there's nothing to persist and nothing left to validate.
     if feed.errors.empty? && feed.save
+      feed.refresh_volume!
       respond_to do |format|
         format.turbo_stream { render turbo_stream: tree_streams }
         format.html { redirect_to :feeds }

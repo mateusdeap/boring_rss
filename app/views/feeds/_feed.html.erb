@@ -4,10 +4,11 @@
     Inside a folder the row is indented (r-child), names its folder in
     data-parent-folder, and starts hidden if that folder is collapsed. The
     disclosure column is only used by folder rows. Health column: the failing status (code or word)
-    while the last poll failed, otherwise the age of the last poll; the
-    hover text spells out the full detail. %>
+    while the last poll failed, STALE when no new items came past the
+    feed's usual interval (Feed#stale?), otherwise the age of the last
+    poll; the hover text spells out the full detail. %>
 <% unread = feed.unread_count %>
-<% health = feed.fetch_failed? ? "fail" : (feed.last_fetched_at? ? "ok" : "unknown") %>
+<% health = feed.health %>
 <li id="<%= dom_id feed %>" role="treeitem" aria-selected="false" tabindex="-1"
     data-feed-id="<%= feed.id %>" data-unread="<%= unread %>" data-health="<%= health %>"
     data-fetched-at="<%= feed.last_fetched_at&.utc&.iso8601 %>"
@@ -19,6 +20,8 @@
   <%= link_to feed.title, feed_path(feed.id), data: { turbo_frame: "current_feed", turbo_action: "advance" }, class: "r-name", tabindex: -1 %>
   <% if feed.fetch_failed? %>
     <%= status_code_tag feed.last_fetch_status, title: fetch_failure_summary(feed) %>
+  <% elsif health == "stale" %>
+    <span class="r-code r-code-warn" title="No new items in <%= rdr_age(feed.last_item_at) %> — usually <%= items_per_week_label(feed) %>">STALE</span>
   <% elsif feed.last_fetched_at? %>
     <span class="r-dim" title="<%= feed.last_fetch_status %> · <%= feed.last_fetch_detail %> · <%= rdr_time(feed.last_fetched_at) %>"><%= rdr_age(feed.last_fetched_at) %></span>
   <% else %>

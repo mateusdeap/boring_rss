@@ -59,6 +59,7 @@ class UpdateFeedsJob < ApplicationJob
     existing_identities = feed.items.pluck(:guid, :link).map { |guid, link| guid.presence || link }.to_set
     new_entries = entries.reject { |entry| existing_identities.include?(entry.guid.presence || entry.link) }
     feed.items << InitializeItems.new(new_entries).call
+    feed.refresh_volume! if new_entries.any?
 
     feed.record_fetch!(
       status: response.status.to_s,

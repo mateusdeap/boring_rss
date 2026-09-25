@@ -47,12 +47,13 @@ class FolderTest < ActiveSupport::TestCase
     assert_not feed.valid?
   end
 
-  test "a filed feed's row broadcast also re-renders its folder row" do
+  test "a filed feed's row broadcast also re-renders its folder row and the group rows showing it" do
     feed = feeds(:one)
     feed.update!(folder: folders(:tech))
 
-    assert_turbo_stream_broadcasts [ feed.user, :feeds ], count: 2 do
-      feed.broadcast_row
-    end
+    streams = capture_turbo_stream_broadcasts([ feed.user, :feeds ]) { feed.broadcast_row }
+
+    assert_equal [ "feed_#{feed.id}", "folder_#{folders(:tech).id}", "group_all", "group_#{folders(:tech).id}" ],
+                 streams.map { |stream| stream["target"] }
   end
 end

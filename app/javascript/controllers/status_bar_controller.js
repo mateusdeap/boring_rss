@@ -1,12 +1,13 @@
 import { Controller } from "@hotwired/stimulus"
 
-// Keeps the StatusBar's FEEDS / UNREAD / LAST FETCH / ERR cells in step
+// Keeps the StatusBar's FEEDS / UNREAD / LAST FETCH / ERR / STALE cells,
+// and the left pane header's feed and unread counts, in step
 // with the feed tree (#feeds). Each tree row carries data-unread,
 // data-health and data-fetched-at, and rows are appended/replaced/removed
 // live by Turbo Streams, so observing the tree is enough — the bar never
 // needs its own broadcast.
 export default class extends Controller {
-  static targets = ["feeds", "unread", "last", "errors"]
+  static targets = ["feeds", "unread", "last", "errors", "stale"]
 
   connect() {
     this.tree = document.getElementById("feeds")
@@ -28,6 +29,7 @@ export default class extends Controller {
     const rows = [...this.tree.querySelectorAll("[data-feed-id]")]
     const unread = rows.reduce((sum, row) => sum + Number(row.dataset.unread || 0), 0)
     const errors = rows.filter((row) => row.dataset.health === "fail").length
+    const stale = rows.filter((row) => row.dataset.health === "stale").length
     const fetched = rows.map((row) => Date.parse(row.dataset.fetchedAt)).filter((time) => !isNaN(time))
 
     this.feedsTarget.textContent = this.format(rows.length)
@@ -36,7 +38,14 @@ export default class extends Controller {
     // Colour is for meaning: zero errors is idle grey, not fail red.
     this.errorsTarget.classList.toggle("r-code-fail", errors > 0)
     this.errorsTarget.classList.toggle("r-code-idle", errors === 0)
+    this.staleTarget.textContent = `${this.format(stale)} STALE`
+    this.staleTarget.classList.toggle("r-code-warn", stale > 0)
+    this.staleTarget.classList.toggle("r-code-idle", stale === 0)
     this.renderLast(fetched.length ? new Date(Math.max(...fetched)) : null)
+
+    // 01 GROUPS / 01 FEEDS header.
+    document.querySelectorAll("[data-tree-summary='feeds']").forEach((el) => { el.textContent = this.format(rows.length) })
+    document.querySelectorAll("[data-tree-summary='unread']").forEach((el) => { el.textContent = this.format(unread) })
   }
 
   // `08:14Z (4 min)`, absolute ISO time on hover.

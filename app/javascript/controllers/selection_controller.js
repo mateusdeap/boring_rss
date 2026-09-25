@@ -1,4 +1,5 @@
 import { Controller } from "@hotwired/stimulus"
+import { savePreferences } from "lib/preferences"
 
 // Tracks which FeedTree row / ItemTable row is selected and which pane last
 // had focus: selection is what you're looking at (aria-selected, paper-3
@@ -25,6 +26,7 @@ import { Controller } from "@hotwired/stimulus"
 //             pattern); Enter or → opens a feed; on a folder, Enter
 //             toggles it, → expands, ← collapses (← on a feed inside a
 //             folder moves to the folder)
+//   G / F     left pane: Groups or Feeds mode (saved per user)
 //   M         mark / unmark the open item
 //   ⇧U        unread-only filter    ⇧R  mark all read (current feed)
 //   A         add feed        L  toggle the fetch log
@@ -66,6 +68,10 @@ export default class extends Controller {
 
     this.selected.feedRowId = treeRowId
     this.selected.focusedPane = "tree"
+    // Opening a group shows Groups mode, opening a feed (a group's health
+    // link, say) shows Feeds mode: the selected row is always on screen.
+    const list = document.getElementById(treeRowId)?.closest("#groups, #feeds")
+    if (list) this.setMode(list.id)
     this.element.dataset.screen = "items"
     this.applySelection()
   }
@@ -79,6 +85,27 @@ export default class extends Controller {
     this.element.dataset.screen = "reader"
     this.applySelection()
     event.target.querySelector(".rdr-reader-scroll")?.focus({ preventScroll: true })
+  }
+
+  // The [G] GROUPS / [F] FEEDS control and keys. The switch happens here;
+  // the choice is saved in the background.
+  showGroups() { this.setMode("groups") }
+  showFeeds() { this.setMode("feeds") }
+
+  setMode(mode) {
+    const pane = this.element.querySelector(".rdr-pane-tree")
+    if (!pane || pane.dataset.treeMode === mode) return
+
+    pane.dataset.treeMode = mode
+    pane.querySelectorAll("[data-tree-mode-button]").forEach((button) => {
+      button.setAttribute("aria-pressed", button.dataset.treeModeButton === mode)
+    })
+    this.updateTreeTabStop()
+    savePreferences({ tree_mode: mode })
+  }
+
+  get treeMode() {
+    return this.element.querySelector(".rdr-pane-tree")?.dataset.treeMode || "feeds"
   }
 
   // The reader's [K] PREV / [J] NEXT and the phone bottom bar.
@@ -121,6 +148,8 @@ export default class extends Controller {
         if (event.target.closest("a, button, summary")) return
         return this.openItemUnderCursor(event)
       case "m": return this.handled(event, () => this.toggleMark())
+      case "g": return this.handled(event, () => this.setMode("groups"))
+      case "f": return this.handled(event, () => this.setMode("feeds"))
       case "shift+u":
       case "shift+r":
         return this.clickShortcut(event, this.combo(event))
@@ -313,18 +342,18 @@ export default class extends Controller {
   }
 
   // Roving tabindex: exactly one tree row (the selected one, else the
-  // first) is reachable with Tab; arrows move from there.
+  // first) is reachable with Tab; arrows move from there. Only the current
+  // mode's list and the Marked row count.
   // (A selected feed inside a collapsed folder hands the tab stop to the
   // first visible row.)
   updateTreeTabStop() {
-    const rows = this.treeRows()
-    const visible = rows.filter((row) => !row.hidden)
+    const visible = this.visibleTreeRows()
     const stop = visible.find((row) => row.id === this.selected.feedRowId) || visible[0]
-    rows.forEach((row) => { row.tabIndex = row === stop ? 0 : -1 })
+    this.element.querySelectorAll(".rdr-pane-tree [role='treeitem']").forEach((row) => { row.tabIndex = row === stop ? 0 : -1 })
   }
 
   treeRows() {
-    return [...this.element.querySelectorAll("#feeds [role='treeitem']")]
+    return [...this.element.querySelectorAll(`#${this.treeMode} [role='treeitem'], .rdr-marked-list [role='treeitem']`)]
   }
 
   visibleTreeRows() {

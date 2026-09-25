@@ -1,4 +1,30 @@
 class Feed < ApplicationRecord
+  # Volume is measured over the last VOLUME_WINDOW of items.
+  VOLUME_WINDOW = 8.weeks
+  # STALE (RDR-01 `warn`: "no new items past its expected interval"): the
+  # newest item is older than three of the feed's usual gaps between items
+  # (a week over its items per week), and never sooner than STALE_AFTER.
+  STALE_GAPS = 3
+  STALE_AFTER = 14.days
+
+  # The worst health across some feeds, for a group or folder row:
+  # `1 ERR` over `1 STALE` over `OK`. `feed` is the first one failing (or
+  # stale) in the order given, which the row's health link opens.
+  HealthSummary = Data.define(:tone, :label, :feed, :failing, :stale)
+
+  def self.health_summary(feeds)
+    failing = feeds.select(&:fetch_failed?)
+    stale = feeds.select { |feed| !feed.fetch_failed? && feed.stale? }
+
+    if failing.any?
+      HealthSummary.new("fail", "#{failing.size} ERR", failing.first, failing, stale)
+    elsif stale.any?
+      HealthSummary.new("warn", "#{stale.size} STALE", stale.first, failing, stale)
+    else
+      HealthSummary.new(feeds.any?(&:last_fetched_at?) ? "ok" : "idle", "OK", nil, failing, stale)
+    end
+  end
+
   belongs_to :user
   belongs_to :folder, optional: true
   has_many :items, dependent: :destroy
@@ -23,6 +49,32 @@ class Feed < ApplicationRecord
 
   def fetch_failed?
     last_fetch_error_at?
+  end
+
+  def stale?(now: Time.current)
+    return false unless last_item_at
+
+    gap = items_per_week.positive? ? 1.week.to_f / items_per_week : 0
+    last_item_at < now - [ gap * STALE_GAPS, STALE_AFTER.to_f ].max
+  end
+
+  # fail / stale / ok, or unknown before the first poll. The tree rows'
+  # data-health, read by the StatusBar.
+  def health
+    if fetch_failed? then "fail"
+    elsif !last_fetched_at? then "unknown"
+    elsif stale? then "stale"
+    else "ok"
+    end
+  end
+
+  # Recomputes the cached volume after items were added: items per week
+  # over the last VOLUME_WINDOW, and the newest item's time. An item with no
+  # date counts from when it was stored.
+  def refresh_volume!
+    dated = items.pluck(Arel.sql("COALESCE(published_at, items.created_at)")).compact
+    recent = dated.count { |time| time >= VOLUME_WINDOW.ago }
+    update_columns(items_per_week: recent / VOLUME_WINDOW.in_weeks, last_item_at: dated.max)
   end
 
   def folder_name
@@ -68,14 +120,18 @@ class Feed < ApplicationRecord
   # subscribed.
   # The folder row aggregates its feeds' unread counts and health, so it's
   # re-rendered alongside.
+  # Groups mode's rows (All feeds, and the feed's folder or Ungrouped)
+  # aggregate the same counts and health, so they follow too.
   def broadcast_row
     broadcast_replace_to user, :feeds, target: self, partial: "feeds/feed", locals: { feed: self }
     folder&.broadcast_row
+    Group.containing(self).each(&:broadcast_row)
   end
 
   def broadcast_row_later
     broadcast_replace_later_to user, :feeds, target: self, partial: "feeds/feed", locals: { feed: self }
     folder&.broadcast_row_later
+    Group.containing(self).each(&:broadcast_row_later)
   end
 
   private

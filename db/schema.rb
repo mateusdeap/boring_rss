@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_24_191958) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_25_183415) do
   create_table "feeds", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "description"
@@ -18,11 +18,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_191958) do
     t.string "feed_url"
     t.integer "fetch_failures_count", default: 0, null: false
     t.integer "folder_id"
+    t.float "items_per_week", default: 0.0, null: false
     t.integer "last_fetch_bytes"
     t.string "last_fetch_detail"
     t.datetime "last_fetch_error_at"
     t.string "last_fetch_status"
     t.datetime "last_fetched_at"
+    t.datetime "last_item_at"
     t.string "last_modified"
     t.string "link"
     t.string "title"
@@ -93,6 +95,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_24_191958) do
     t.integer "reader_measure", default: 68, null: false
     t.integer "reader_text_size", default: 16, null: false
     t.string "theme", default: "system", null: false
+    t.string "tree_mode", default: "groups", null: false
     t.boolean "unread_only", default: false, null: false
     t.datetime "updated_at", null: false
     t.index ["email_address"], name: "index_users_on_email_address", unique: true

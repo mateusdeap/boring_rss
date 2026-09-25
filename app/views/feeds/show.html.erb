@@ -2,5 +2,5 @@
 <% if turbo_frame_request? %>
   <%= items %>
 <% else %>
-  <%= render "feeds/app", screen: "items", items_frame: items, reader_frame: nil %>
+  <%= render "feeds/app", screen: "items", items_frame: items, reader_frame: nil, tree_mode: "feeds" %>
 <% end %>

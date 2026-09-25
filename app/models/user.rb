@@ -5,6 +5,10 @@ class User < ApplicationRecord
   has_many :folders, dependent: :destroy
   has_many :items, through: :feeds
 
+  # The left pane's mode (RDR-01 FeedTree): Groups, the default, lists
+  # folders as reading rivers; Feeds lists every feed for managing them.
+  enum :tree_mode, { groups: "groups", feeds: "feeds" }, default: "groups", prefix: true, validate: true
+
   enum :theme, { system: "system", light: "light", dark: "dark" }, default: "system"
 
   # Reader text settings (the reader's TEXT bar): one app-wide choice per
