@@ -43,8 +43,11 @@ class ItemsController < ApplicationController
   end
 
   # POST /items or /items.json
+  # The feed must be one of the signed-in user's own (a scoped find, so
+  # another account's feed id is not found).
   def create
-    @item = Item.new(item_params)
+    feed = Current.user.feeds.find(params.expect(item: [ :feed_id ])[:feed_id])
+    @item = feed.items.build(item_params)
 
     respond_to do |format|
       if @item.save

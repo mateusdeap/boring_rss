@@ -18,10 +18,19 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create item" do
     assert_difference("Item.count") do
-      post items_url, params: { item: { summary: @item.summary, link: @item.link, title: @item.title } }
+      post items_url, params: { item: { feed_id: @item.feed_id, summary: @item.summary, link: @item.link, title: @item.title } }
     end
 
     assert_redirected_to item_url(Item.last)
+    assert_equal @item.feed, Item.last.feed
+  end
+
+  test "create refuses another user's feed" do
+    assert_no_difference("Item.count") do
+      post items_url, params: { item: { feed_id: feeds(:two).id, title: "Planted" } }
+    end
+
+    assert_response :not_found
   end
 
   test "should show item" do

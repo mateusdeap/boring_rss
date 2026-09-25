@@ -34,17 +34,5 @@
         <%= yield %>
       </main>
     </div>
-
-    <dialog id="tip-dialog" class="r-dialog">
-      <div class="r-panel-h">TIP <span class="r-label">Lightning</span></div>
-      <div class="r-stack r-pad">
-        <p>Enjoying this? Send some sats, no obligation.</p>
-        <%= image_tag "lightning_tip_qr.svg", alt: "Lightning Address QR code for peartree@getalby.com", class: "mx-auto w-48 h-48" %>
-        <p><span class="r-label">Address</span> <%= link_to "peartree@getalby.com", "lightning:peartree@getalby.com" %></p>
-        <div class="r-dialog-actions">
-          <button class="r-btn" commandfor="tip-dialog" command="close" type="button"><span class="r-key">ESC</span> Close</button>
-        </div>
-      </div>
-    </dialog>
   </body>
 </html>

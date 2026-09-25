@@ -25,7 +25,6 @@
       <% end %>
     </div>
   <% end %>
-  <div><button type="button" command="show-modal" commandfor="tip-dialog">Tip</button></div>
   <% if authenticated? %>
     <div><%= button_to "Sign out", session_path, method: :delete, form: { class: "contents" } %></div>
   <% end %>

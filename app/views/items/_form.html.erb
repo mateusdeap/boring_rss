@@ -11,6 +11,13 @@
     </div>
   <% end %>
 
+  <% if item.new_record? %>
+    <div>
+      <%= form.label :feed_id, style: "display: block" %>
+      <%= form.collection_select :feed_id, Current.user.feeds.order(:title), :id, :title %>
+    </div>
+  <% end %>
+
   <div>
     <%= form.label :title, style: "display: block" %>
     <%= form.text_field :title %>
