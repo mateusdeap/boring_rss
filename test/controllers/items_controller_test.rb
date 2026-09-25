@@ -142,6 +142,18 @@ class ItemsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".r-body", count: 0
   end
 
+  test "the details CONTENT row counts unwrapped tables next to the stripped pixels" do
+    @item.update!(summary: <<~HTML)
+      <table><tr><td><table><tr><td>Layout</td></tr></table></td></tr></table>
+      <table><tr><th>K</th><th>V</th></tr><tr><td>a</td><td>1</td></tr></table>
+      <img src="https://example.com/t.gif" width="1" height="1">
+    HTML
+
+    get item_url(@item)
+
+    assert_select ".rdr-details-grid dd", text: /· 1 pixel stripped · 2 of 3 tables unwrapped/
+  end
+
   test "show applies the user's text size, measure and details setting" do
     users(:one).update!(reader_text_size: 19, reader_measure: 76, reader_details_expanded: false)
 

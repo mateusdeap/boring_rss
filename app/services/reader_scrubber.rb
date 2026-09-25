@@ -41,6 +41,16 @@
 # 5. `pre` is framed as a code block: label bar with the language, line
 #    count and [C] COPY.
 #
+# Two places this differs from the letter of the section, on purpose:
+# - Embeds become link rows in the per-node pass, not as the last step,
+#   so no path through this class can ever emit an iframe. The output is
+#   the same: a link row classifies like the embed it replaced.
+# - A blank cell in a row that has content survives until its table is
+#   classified (spacer *rows* go first, as specified). Removing it earlier
+#   would shift a data table's columns; the section's own "empty columns"
+#   rule then drops it from data tables, and unwrapping drops it from
+#   layout tables.
+#
 # Loofah walks bottom-up, so a node's children are already scrubbed —
 # their URLs resolved — when the node itself comes up.
 class ReaderScrubber < Rails::HTML::PermitScrubber

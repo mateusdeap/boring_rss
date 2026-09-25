@@ -293,6 +293,27 @@ class ReaderScrubberTest < ActiveSupport::TestCase
     assert_equal [ "https://example.com/photo.png" ], html.css("img").map { _1["src"] }
   end
 
+  test "a spacer cell in a layout row leaves nothing behind" do
+    html = clean(<<~HTML)
+      <table><tr><td width="20">&nbsp;<br></td><td>Text</td><td><img src="/p.gif" width="1" height="1"></td></tr></table>
+    HTML
+
+    assert_equal [ [ "p", "Text" ] ], blocks(html)
+  end
+
+  test "a layout-only newsletter leaves no table markup for the table rules to style" do
+    html = clean(<<~HTML)
+      <table width="600" bgcolor="#eee" style="border:1px solid"><tr><td>
+        <table role="presentation"><tr><td>•</td><td><a href="/a">Story</a> — summary</td></tr></table>
+        <hr><hr>
+        <table><tr><td bgcolor="#ffc"><strong>Sponsor</strong><br><br>Copy</td></tr></table>
+      </td></tr></table>
+    HTML
+
+    assert_empty html.css("table, thead, tbody, tr, td, th, [style], [bgcolor], [width]")
+    assert_equal [ [ "p", "Story — summary" ], [ "hr", "" ], [ "p", "Sponsor" ], [ "p", "Copy" ] ], blocks(html)
+  end
+
   test "empty paragraphs go" do
     html = clean(%(<p>&nbsp;</p><p><br></p><p>Kept</p><p> <span></span> </p>))
 
